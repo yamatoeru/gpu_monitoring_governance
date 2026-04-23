@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../namespace.yaml
+  - ../rbac.yaml
+  - ../configmap.yaml
+  - ../ingest-configmap.yaml
+  - ../ingest-deployment.yaml
+  - ../ingest-service.yaml
+  - ../dcgm-daemonset.yaml
+  - ../telegraf-daemonset.yaml
+  - ../validator-cronjob.yaml
+
+configMapGenerator:
+  - name: validator-script
+    namespace: gpu-monitoring
+    files:
+      - validator.py=../validator.py
+
+patchesStrategicMerge:
+  - patch-configmap.yaml
+  - patch-dcgm-daemonset.yaml
+  - patch-telegraf-daemonset.yaml
+  - patch-validator-cronjob.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true

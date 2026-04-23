@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gpu-agent-validator
+  namespace: gpu-monitoring
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: validator
+              image: python:3.12-slim
+              command:
+                - /bin/sh
+                - -lc
+                - |
+                  pip install --no-cache-dir kubernetes >/tmp/pip.log 2>&1
+                  python /opt/validator/validator.py
+              volumeMounts:
+                - name: validator-script
+                  mountPath: /opt/validator
+          volumes:
+            - name: validator-script
+              configMap:
+                name: validator-script

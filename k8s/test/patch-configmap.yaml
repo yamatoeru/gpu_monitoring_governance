@@ -4,7 +4,7 @@ metadata:
   name: gpu-monitoring-config
   namespace: gpu-monitoring
 data:
-  ingest_url: "http://ingest.internal:8080/events"
+  ingest_url: "http://gpu-ingest.gpu-monitoring.svc.cluster.local:8080/events"
   dcgm_scrape_url: "http://dcgm-exporter.gpu-monitoring.svc.cluster.local:9400/metrics"
   telegraf.conf: |
     [[inputs.tail]]
@@ -39,7 +39,7 @@ data:
       json_string_fields = ["event_time", "host", "message", "root_cause", "recommended_action", "agent_version", "config_version"]
 
     [[outputs.http]]
-      url = "http://ingest.internal:8080/events"
+      url = "http://gpu-ingest.gpu-monitoring.svc.cluster.local:8080/events"
       method = "POST"
       data_format = "json"
       timeout = "5s"

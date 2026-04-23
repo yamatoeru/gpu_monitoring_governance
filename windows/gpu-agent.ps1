@@ -5,4 +5,8 @@ param(
 )
 
 $env:PYTHONPATH = "C:\gpu-agent\pkg"
-python C:\gpu-agent\bin\gpu-agent.py $Command
+if (Test-Path "C:\Program Files\Python312\python.exe") {
+  & "C:\Program Files\Python312\python.exe" -m gpu_agent.main $Command
+} else {
+  python -m gpu_agent.main $Command
+}
