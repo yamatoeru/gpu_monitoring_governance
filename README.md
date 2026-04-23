@@ -50,17 +50,30 @@
 
 ## 빠른 시작
 
+설치 파일을 가져오는 가장 단순한 방법은 아래 둘 중 하나입니다.
+
+- Git 사용 가능:
+
+```bash
+git clone https://github.com/yamatoeru/gpu_monitoring_governance.git
+cd gpu_monitoring_governance
+```
+
+- Git 사용 불가:
+  - GitHub 리포지토리 화면에서 `Code` -> `Download ZIP`
+  - 압축 해제 후 해당 디렉토리에서 설치 진행
+
 ### Linux
 
 1. Python 3.10+ 준비
-2. `agent/` 배포
+2. 리포를 다운로드하거나 패키징된 설치 파일을 대상 서버에 복사
 3. `linux/install_linux.sh` 실행
 4. `sudo /opt/gpu-agent/bin/gpu-agent validate`
 
 ### Windows
 
 1. Python 3.10+ 준비
-2. 리포 또는 패키징된 agent 파일 배포
+2. 리포 ZIP 또는 패키징된 설치 파일을 Windows 서버에 복사
 3. `windows/install_windows.ps1` 실행
 4. `C:\gpu-agent\bin\gpu-agent.cmd validate`
 
@@ -118,6 +131,7 @@ http://gpu-ingest.gpu-monitoring.svc.cluster.local:8080/events
 ## 문서
 
 - [사용자 설명서](USER_GUIDE.md)
+- [운영자 배포 체크리스트](OPERATOR_CHECKLIST.md)
 - [트러블슈팅 가이드](TROUBLESHOOTING.md)
 - [ingest 설명](ingest/README.md)
 - [K8s 테스트 오버레이 설명](k8s/test/README.md)
