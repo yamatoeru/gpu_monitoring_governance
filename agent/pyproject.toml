@@ -1,0 +1,13 @@
+[project]
+name = "gpu-agent"
+version = "0.1.0"
+description = "GPU monitoring governance agent"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+gpu-agent = "gpu_agent.main:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"

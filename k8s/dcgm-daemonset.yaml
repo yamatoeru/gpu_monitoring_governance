@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: dcgm-exporter
+  namespace: gpu-monitoring
+spec:
+  selector:
+    matchLabels:
+      app: dcgm-exporter
+  template:
+    metadata:
+      labels:
+        app: dcgm-exporter
+    spec:
+      serviceAccountName: gpu-monitoring-sa
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: dcgm-exporter
+          image: harbor.internal/monitoring/dcgm-exporter:0.1.0
+          args:
+            - --web-listen-address=:9400
+          ports:
+            - containerPort: 9400
+              name: metrics
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      nodeSelector:
+        nvidia.com/gpu.present: "true"

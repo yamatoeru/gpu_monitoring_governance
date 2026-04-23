@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-monitoring-config
+  namespace: gpu-monitoring
+data:
+  ingest_url: "http://ingest.internal:8080/events"
+  dcgm_scrape_url: "http://127.0.0.1:9400/metrics"
+  telegraf.conf: |
+    [[inputs.prometheus]]
+      urls = ["http://127.0.0.1:9400/metrics"]
+
+    [[outputs.http]]
+      url = "http://ingest.internal:8080/events"
+      method = "POST"
+      data_format = "json"
+      timeout = "5s"

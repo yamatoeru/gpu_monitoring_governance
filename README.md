@@ -1,182 +1,52 @@
-# gpu_monitoring_governance
+# GPU Monitoring Governance Starter Kit
 
-You are a senior infrastructure engineer.
+이 패키지는 아래 운영 모델을 기준으로 작성되었습니다.
 
-Generate production-ready code for a GPU monitoring governance system based on the following constraints and architecture.
+- Windows
+  - Telegraf: Windows Service
+  - gpu-agent: PowerShell + Scheduled Task
+- Linux
+  - dcgm-exporter: systemd service
+  - telegraf: systemd service
+  - gpu-agent: CLI + systemd timer
+- Kubernetes
+  - dcgm-exporter: DaemonSet
+  - telegraf: DaemonSet
+  - validator: CronJob
 
----
+## 구성
 
-SYSTEM CONTEXT
+- `agent/`: 공통 Python CLI (`gpu-agent`)
+- `linux/`: Linux systemd unit, 설치 스크립트, telegraf 설정
+- `windows/`: Windows 설치/검증/스케줄러 스크립트, telegraf 설정
+- `k8s/`: Kubernetes YAML (DaemonSet/CronJob/RBAC/ConfigMap)
+- `examples/`: 버전 정보 예시
 
-The system operates in an air-gapped environment with:
+## 빠른 시작
 
-- No central root access
-- No Ansible/Puppet
-- User-driven installation
-- Centralized monitoring required
+### Linux
 
----
+1. Python 3.10+ 준비
+2. `agent/` 배포
+3. `linux/install_linux.sh` 실행
+4. `sudo /opt/gpu-agent/bin/gpu-agent validate`
 
-TARGET ENVIRONMENTS
+### Windows
 
-1. Windows VM
-2. Linux VM / Baremetal
-3. Kubernetes
+1. Python 3.10+ 준비
+2. `agent/` 또는 패키징된 `gpu-agent.pyz/exe` 배포
+3. `windows/install_windows.ps1` 실행
+4. `gpu-agent validate`
 
----
+### Kubernetes
 
-ARCHITECTURE
+1. 이미지 빌드 및 사내 Harbor 푸시
+2. `k8s/` 이미지 경로와 인제스트 URL 수정
+3. `kubectl apply -f k8s/`
 
-Components
+## 운영 포인트
 
-- gpu-agent (Python CLI)
-- Telegraf (data collection)
-- dcgm-exporter (Linux/K8s GPU metrics)
-- ClickHouse (central storage)
-
----
-
-DESIGN RULES
-
-1. Do NOT assume SSH or root access
-2. Do NOT use external internet
-3. Do NOT rely on Ansible/Puppet
-4. Separate:
-   - Validation logic (gpu-agent)
-   - Transport (Telegraf)
-   - Storage (ClickHouse)
-5. Keep user interface minimal
-
----
-
-REQUIRED FEATURES
-
-gpu-agent CLI
-
-Commands:
-
-- install
-- validate
-- repair
-- upgrade
-- version
-
----
-
-VALIDATION LOGIC
-
-Implement checks:
-
-Common
-
-- agent version
-- latest version (via HTTP JSON)
-
-Linux
-
-- nvidia-smi
-- systemd service (telegraf, dcgm-exporter)
-- dcgm metrics endpoint
-
-Windows
-
-- nvidia-smi
-- Windows service (telegraf)
-
-Kubernetes
-
-- DaemonSet status
-- Pod health
-- metrics endpoint
-
----
-
-OUTPUT FORMAT
-
-The agent must produce a JSON file:
-
-Path:
-
-- Linux: /var/log/gpu-agent/last_result.json
-- Windows: C:\gpu-agent\status\last_result.json
-
-Format:
-
-{
-"event_time": "...",
-"host": "...",
-"env_type": "...",
-"os_type": "...",
-"event_type": "...",
-"severity": "...",
-"error_code": "...",
-"message": "...",
-"root_cause": "...",
-"recommended_action": "...",
-"agent_version": "...",
-"config_version": "...",
-"checks": [...]
-}
-
----
-
-REPAIR LOGIC
-
-Implement safe actions only:
-
-- restart services
-- recreate missing config
-- re-run validation
-
----
-
-VERSION CHECK
-
-Fetch from:
-
-http://repo.internal/gpu-agent/latest_version.json
-
-Compare with current version.
-
----
-
-TELEGRAF INTEGRATION
-
-Assume Telegraf reads JSON file and sends to central system.
-
-Do NOT implement ingestion in gpu-agent.
-
----
-
-KUBERNETES
-
-Generate:
-
-- DaemonSet YAML for dcgm-exporter
-- DaemonSet YAML for Telegraf
-- CronJob YAML for validator
-
----
-
-OUTPUT REQUIREMENTS
-
-Generate:
-
-1. Python CLI code (modular, production-ready)
-2. Linux systemd service files
-3. Windows PowerShell scripts
-4. Kubernetes YAML manifests
-5. Example Telegraf config
-
----
-
-CODE QUALITY
-
-- Use clean modular structure
-- Add comments explaining logic
-- Include error handling
-- Avoid unnecessary dependencies
-
----
-
-Now generate the full implementation.
+- `gpu-agent`는 로컬에서 `last_result.json`을 생성합니다.
+- Telegraf가 이 JSON을 읽어 중앙 수집기로 전송합니다.
+- K8s validator는 HTTP API로 직접 전송하도록 예시를 넣었습니다.
+- 실제 운영에서는 FastAPI/Flask ingest gateway를 두고 ClickHouse에 적재하는 방식을 권장합니다.
