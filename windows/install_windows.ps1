@@ -5,7 +5,7 @@ $BinDir = "$BaseDir\bin"
 $PkgDir = "$BaseDir\pkg"
 $StatusDir = "$BaseDir\status"
 $TelegrafVersion = if ($env:TELEGRAF_VERSION) { $env:TELEGRAF_VERSION } else { "1.33.3" }
-$TelegrafZipUrl = if ($env:TELEGRAF_ZIP_URL) { $env:TELEGRAF_ZIP_URL } else { "https://dl.influxdata.com/telegraf/releases/telegraf-$TelegrafVersion_windows_amd64.zip" }
+$TelegrafZipUrl = if ($env:TELEGRAF_ZIP_URL) { $env:TELEGRAF_ZIP_URL } else { "https://dl.influxdata.com/telegraf/releases/telegraf-${TelegrafVersion}_windows_amd64.zip" }
 $TelegrafZipPath = "$env:TEMP\telegraf-$TelegrafVersion-x64.zip"
 $TelegrafExtractDir = "$env:TEMP\telegraf-$TelegrafVersion-x64"
 $TelegrafConfDir = "C:\Program Files\Telegraf\conf.d"
@@ -39,10 +39,12 @@ function Install-TelegrafZip {
   Remove-Item "C:\Program Files\Telegraf" -Recurse -Force -ErrorAction SilentlyContinue
   New-Item -ItemType Directory -Force -Path "C:\Program Files\Telegraf", $TelegrafConfDir | Out-Null
   Copy-Item -Path "$downloadedDir\*" -Destination "C:\Program Files\Telegraf" -Recurse -Force
-  if (-not (Get-Service -Name telegraf -ErrorAction SilentlyContinue)) {
-    $bin = '"C:\Program Files\Telegraf\telegraf.exe" --service run --config-directory "C:\Program Files\Telegraf\conf.d"'
-    New-Service -Name telegraf -BinaryPathName $bin -DisplayName "telegraf" -StartupType Automatic
+  if (Get-Service -Name telegraf -ErrorAction SilentlyContinue) {
+    Stop-Service telegraf -Force -ErrorAction SilentlyContinue
+    sc.exe delete telegraf | Out-Null
+    Start-Sleep -Seconds 2
   }
+  & $TelegrafExe --config-directory $TelegrafConfDir --service-name telegraf service install --display-name telegraf --auto-restart | Out-Null
 }
 
 $TelegrafAction = "install"
