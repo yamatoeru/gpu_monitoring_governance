@@ -168,3 +168,51 @@ kubectl exec -n gpu-monitoring ds/telegraf -- ls -1 /var/log/pods
 - dead-letter 처리
 
 즉 지금은 `중앙 저장 완료` 단계가 아니라 `중앙 수신 / 정규화 검증` 단계입니다.
+
+## 11. 기존 Telegraf 버전이 이미 설치되어 있음
+
+증상:
+
+- 설치 스크립트를 실행했는데 Telegraf 버전이 바뀌지 않음
+
+원인:
+
+- 현재 설치 스크립트는 기존 Telegraf가 있으면 기본적으로 보존합니다
+- 목표 버전과 다를 경우 경고만 출력하고 계속 진행합니다
+
+확인:
+
+```bash
+telegraf --version
+```
+
+```powershell
+C:\Program Files\Telegraf\telegraf.exe version
+```
+
+강제 교체:
+
+```bash
+sudo TELEGRAF_FORCE_VERSION=true ./install_linux.sh
+```
+
+```powershell
+$env:TELEGRAF_FORCE_VERSION = "true"
+powershell -ExecutionPolicy Bypass -File .\install_windows.ps1
+```
+
+## 12. 기존 dcgm-exporter 서비스 정의가 커스텀임
+
+증상:
+
+- 운영자가 직접 수정한 `dcgm-exporter.service`를 유지하고 싶음
+
+현재 동작:
+
+- 기존 unit 파일이 번들 unit과 다르면 기본적으로 기존 unit을 유지합니다
+
+강제 교체:
+
+```bash
+sudo GPU_AGENT_MANAGE_DCGM_SERVICE=true ./install_linux.sh
+```

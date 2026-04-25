@@ -76,6 +76,32 @@ Git을 설치하지 않은 서버나 Windows 환경에서는 GitHub 리포지토
 
 다운로드 후에는 각 환경의 설치 절차를 진행합니다.
 
+### 기존 Telegraf가 이미 설치된 경우
+
+- Linux / Windows 설치 스크립트는 기존 Telegraf를 먼저 감지합니다.
+- 기존 버전이 목표 버전과 다르면 기본 동작은 `기존 버전 유지`입니다.
+- 이 경우 설치는 계속 진행되지만 경고를 출력합니다.
+- 목표 버전으로 강제 교체하려면 아래 환경변수를 사용합니다.
+
+```bash
+TELEGRAF_FORCE_VERSION=true
+```
+
+Windows PowerShell:
+
+```powershell
+$env:TELEGRAF_FORCE_VERSION = "true"
+```
+
+### 기존 dcgm-exporter 서비스가 이미 있는 경우
+
+- Linux 설치 스크립트는 기존 `dcgm-exporter.service`가 번들 unit과 다르면 기본적으로 기존 unit을 유지합니다.
+- 번들 unit으로 강제 교체하려면 아래 환경변수를 사용합니다.
+
+```bash
+GPU_AGENT_MANAGE_DCGM_SERVICE=true
+```
+
 ## 4. Linux 사용 절차
 
 1. Python 3.10+ 설치

@@ -5,13 +5,67 @@ $BinDir = "$BaseDir\bin"
 $PkgDir = "$BaseDir\pkg"
 $StatusDir = "$BaseDir\status"
 $TelegrafVersion = if ($env:TELEGRAF_VERSION) { $env:TELEGRAF_VERSION } else { "1.33.3" }
-$TelegrafMsiUrl = if ($env:TELEGRAF_MSI_URL) { $env:TELEGRAF_MSI_URL } else { "https://dl.influxdata.com/telegraf/releases/telegraf-$TelegrafVersion_windows_amd64.msi" }
-$TelegrafMsiPath = "$env:TEMP\telegraf-$TelegrafVersion-x64.msi"
+$TelegrafZipUrl = if ($env:TELEGRAF_ZIP_URL) { $env:TELEGRAF_ZIP_URL } else { "https://dl.influxdata.com/telegraf/releases/telegraf-$TelegrafVersion_windows_amd64.zip" }
+$TelegrafZipPath = "$env:TEMP\telegraf-$TelegrafVersion-x64.zip"
+$TelegrafExtractDir = "$env:TEMP\telegraf-$TelegrafVersion-x64"
 $TelegrafConfDir = "C:\Program Files\Telegraf\conf.d"
+$TelegrafExe = "C:\Program Files\Telegraf\telegraf.exe"
+$TelegrafForceVersion = if ($env:TELEGRAF_FORCE_VERSION) { $env:TELEGRAF_FORCE_VERSION } else { "false" }
 
-if (-not (Get-Service -Name telegraf -ErrorAction SilentlyContinue)) {
-  Invoke-WebRequest -UseBasicParsing -Uri $TelegrafMsiUrl -OutFile $TelegrafMsiPath
-  Start-Process msiexec.exe -ArgumentList "/i `"$TelegrafMsiPath`" /qn" -Wait
+function Get-TelegrafInstalledVersion {
+  if (-not (Test-Path $TelegrafExe)) {
+    return $null
+  }
+  $output = & $TelegrafExe version 2>$null
+  if (-not $output) {
+    return $null
+  }
+  if ($output -match 'Telegraf\s+([0-9.]+)') {
+    return $Matches[1]
+  }
+  return $null
+}
+
+function Install-TelegrafZip {
+  $ProgressPreference = "SilentlyContinue"
+  Invoke-WebRequest -UseBasicParsing -Uri $TelegrafZipUrl -OutFile $TelegrafZipPath
+  Remove-Item $TelegrafExtractDir -Recurse -Force -ErrorAction SilentlyContinue
+  Expand-Archive -Path $TelegrafZipPath -DestinationPath $TelegrafExtractDir -Force
+  $downloadedExe = Get-ChildItem $TelegrafExtractDir -Recurse -Filter telegraf.exe | Select-Object -First 1 -ExpandProperty FullName
+  if (-not $downloadedExe) {
+    throw "telegraf.exe not found in downloaded archive"
+  }
+  $downloadedDir = Split-Path $downloadedExe -Parent
+  Remove-Item "C:\Program Files\Telegraf" -Recurse -Force -ErrorAction SilentlyContinue
+  New-Item -ItemType Directory -Force -Path "C:\Program Files\Telegraf", $TelegrafConfDir | Out-Null
+  Copy-Item -Path "$downloadedDir\*" -Destination "C:\Program Files\Telegraf" -Recurse -Force
+  if (-not (Get-Service -Name telegraf -ErrorAction SilentlyContinue)) {
+    $bin = '"C:\Program Files\Telegraf\telegraf.exe" --service run --config-directory "C:\Program Files\Telegraf\conf.d"'
+    New-Service -Name telegraf -BinaryPathName $bin -DisplayName "telegraf" -StartupType Automatic
+  }
+}
+
+$TelegrafAction = "install"
+$InstalledTelegrafVersion = Get-TelegrafInstalledVersion
+$HasTelegrafService = $null -ne (Get-Service -Name telegraf -ErrorAction SilentlyContinue)
+if ($HasTelegrafService -or $InstalledTelegrafVersion) {
+  $TelegrafAction = "preserve"
+  if (-not $InstalledTelegrafVersion) {
+    Write-Warning "Detected Telegraf service without a valid Telegraf binary. Reinstalling target version $TelegrafVersion."
+    $TelegrafAction = "replace"
+    Install-TelegrafZip
+  } elseif ($InstalledTelegrafVersion -ne $TelegrafVersion) {
+    Write-Warning "Detected existing Telegraf version $InstalledTelegrafVersion (target $TelegrafVersion)."
+    if ($TelegrafForceVersion -eq "true") {
+      Write-Host "TELEGRAF_FORCE_VERSION=true, replacing installed Telegraf with $TelegrafVersion."
+      $TelegrafAction = "replace"
+      Install-TelegrafZip
+    } else {
+      Write-Warning "Preserving existing Telegraf. Set TELEGRAF_FORCE_VERSION=true to replace it."
+    }
+  }
+} else {
+  Install-TelegrafZip
 }
 
 New-Item -ItemType Directory -Force -Path $BaseDir, $BinDir, $PkgDir, $StatusDir, $TelegrafConfDir | Out-Null
@@ -39,8 +93,20 @@ GPU_AGENT_LATEST_VERSION_URL=http://repo.internal/gpu-agent/latest_version.json
 
 schtasks.exe /Create /SC MINUTE /MO 5 /TN "GPU-Agent-Validate" /TR "cmd.exe /c C:\gpu-agent\bin\gpu-agent.cmd validate" /RU SYSTEM /F | Out-Null
 Set-Service -Name telegraf -StartupType Automatic
-Restart-Service -Name telegraf
+if ((Get-Service -Name telegraf).Status -eq "Running") {
+  Restart-Service -Name telegraf -ErrorAction Stop
+} else {
+  Start-Service -Name telegraf -ErrorAction Stop
+}
+if ((Get-Service -Name telegraf).Status -ne "Running") {
+  throw "Telegraf service is installed but not running after installation."
+}
 
 Write-Host "Installed. Next steps:"
+if ($TelegrafAction -eq "preserve") {
+  Write-Host "  - preserved existing telegraf installation"
+} elseif ($TelegrafAction -eq "replace") {
+  Write-Host "  - replaced telegraf with version $TelegrafVersion"
+}
 Write-Host "  1) Ensure Python 3.10+ is installed and in PATH"
 Write-Host "  2) gpu-agent validate"
