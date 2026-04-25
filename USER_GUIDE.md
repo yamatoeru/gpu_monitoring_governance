@@ -113,6 +113,15 @@ cd linux
 sudo ./install_linux.sh
 ```
 
+설치 시 `sudo`가 필요한 이유:
+
+- `telegraf` 패키지 설치 또는 교체
+- `/opt/gpu-agent` 아래 바이너리/패키지 배치
+- `/etc/default/gpu-agent` 환경 파일 작성
+- `/etc/telegraf/telegraf.d/` 설정 파일 배치
+- `/etc/systemd/system/`에 unit/timer 등록
+- `systemctl enable/restart/start` 수행
+
 4. 검증 실행
 
 ```bash
@@ -137,6 +146,14 @@ cd C:\gpu_monitoring_governance\windows
 Set-ExecutionPolicy -Scope Process Bypass
 .\install_windows.ps1
 ```
+
+설치 시 관리자 권한이 필요한 이유:
+
+- `C:\Program Files\Telegraf` 설치 또는 교체
+- `telegraf` Windows 서비스 등록/재시작
+- `C:\gpu-agent` 아래 파일 배치
+- Scheduled Task 생성
+- 시스템 경로와 서비스 상태 확인
 
 4. 검증 실행
 

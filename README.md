@@ -68,6 +68,7 @@ cd gpu_monitoring_governance
 1. Python 3.10+ 준비
 2. 리포를 다운로드하거나 패키징된 설치 파일을 대상 서버에 복사
 3. `linux/install_linux.sh` 실행
+   이 단계는 `sudo`가 필요합니다. 설치 스크립트는 `telegraf` 패키지 설치, `/opt/gpu-agent` 파일 배치, `/etc/default/gpu-agent` 작성, `systemd` unit/timer 등록, 서비스 enable/restart를 수행합니다.
 4. `sudo /opt/gpu-agent/bin/gpu-agent validate`
 
 ### Windows
@@ -75,6 +76,7 @@ cd gpu_monitoring_governance
 1. Python 3.10+ 준비
 2. 리포 ZIP 또는 패키징된 설치 파일을 Windows 서버에 복사
 3. `windows/install_windows.ps1` 실행
+   이 단계는 관리자 권한이 필요합니다. 설치 스크립트는 `C:\Program Files\Telegraf` 설치/갱신, Windows 서비스 등록/재시작, `C:\gpu-agent` 파일 배치, Scheduled Task 생성을 수행합니다.
 4. `C:\gpu-agent\bin\gpu-agent.cmd validate`
 
 ### Kubernetes
