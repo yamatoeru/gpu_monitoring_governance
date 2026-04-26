@@ -161,7 +161,7 @@ sudo ./install_linux.sh
 4. 검증 실행
 
 ```bash
-/opt/gpu-agent/bin/gpu-agent validate
+sudo /opt/gpu-agent/bin/gpu-agent validate
 ```
 
 기본 설치는 `/opt/gpu-agent/bin/gpu-agent`만 생성하며 PATH 심볼릭 링크는 만들지 않습니다.
@@ -174,11 +174,12 @@ sudo ln -s /opt/gpu-agent/bin/gpu-agent /usr/local/bin/gpu-agent
 5. 결과 확인
 
 ```bash
-cat /tmp/gpu-agent-$USER/last_result.json
-cat /tmp/gpu-agent-$USER/heartbeat.json
+sudo cat /var/log/gpu-agent/last_result.json
+sudo cat /var/log/gpu-agent/heartbeat.json
 ```
 
-일반 사용자로 실행하면 `/var/log/gpu-agent` 대신 `/tmp/gpu-agent-<user>`로 자동 전환됩니다. `sudo`로 실행했다면 `/var/log/gpu-agent` 아래 파일을 확인합니다.
+기본 가이드는 `sudo` 실행 기준입니다.
+일반 사용자로 실행하면 `/var/log/gpu-agent` 대신 `/tmp/gpu-agent-<user>`로 자동 전환됩니다.
 이 경우 stderr에 fallback 안내가 출력됩니다.
 
 예:

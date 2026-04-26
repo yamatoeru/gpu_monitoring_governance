@@ -123,7 +123,6 @@ elif [[ "${DCGM_EXPORTER_ACTION}" == "replace" ]]; then
 else
   echo "  - installed bundled dcgm-exporter binary"
 fi
-echo "  1) /opt/gpu-agent/bin/gpu-agent validate"
-echo "     - if /var/log/gpu-agent is not writable, results are written to /tmp/gpu-agent-\$USER"
-echo "  2) cat /tmp/gpu-agent-\$USER/last_result.json"
-echo "     - or use 'sudo cat /var/log/gpu-agent/last_result.json' if validate was run with sudo"
+echo "  1) sudo /opt/gpu-agent/bin/gpu-agent validate"
+echo "  2) sudo cat /var/log/gpu-agent/last_result.json"
+echo "     - non-root validate is supported, but the default guide uses sudo for consistency"
