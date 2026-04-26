@@ -40,6 +40,7 @@ Set-Service -Name sshd -StartupType Automatic
 - `nvidia-smi` 없음
 - `telegraf` 서비스 없음
 - 버전 URL 접근 실패
+- `C:\gpu-agent\bin\gpu-agent.cmd` 대신 `gpu-agent` 같은 PATH 명령을 기대함
 
 확인:
 
@@ -49,6 +50,11 @@ Get-Service telegraf
 where.exe nvidia-smi
 ```
 
+참고:
+
+- 기본 설치는 `C:\gpu-agent\bin\gpu-agent.cmd`를 생성하지만 PATH 등록은 하지 않습니다.
+- `upgrade` 명령은 현재 실제 업그레이드를 수행하지 않고 안내 이벤트만 남깁니다.
+
 ## 4. Linux에서 `gpu-agent validate`가 실패함
 
 가능한 원인:
@@ -56,6 +62,8 @@ where.exe nvidia-smi
 - NVIDIA 드라이버 미설치
 - `dcgm-exporter` 서비스 미기동
 - `telegraf` 서비스 미기동
+- 버전 URL 접근 실패
+- `/var/log/gpu-agent` 쓰기 권한 부족
 
 확인:
 
@@ -65,6 +73,17 @@ systemctl status dcgm-exporter
 systemctl status telegraf
 cat /var/log/gpu-agent/last_result.json
 ```
+
+일반 사용자 테스트:
+
+```bash
+GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test sudo /opt/gpu-agent/bin/gpu-agent validate
+```
+
+참고:
+
+- 기본 설치는 `/opt/gpu-agent/bin/gpu-agent`를 생성하지만 PATH 심볼릭 링크는 만들지 않습니다.
+- `upgrade` 명령은 현재 실제 업그레이드를 수행하지 않고 안내 이벤트만 남깁니다.
 
 ## 5. Kubernetes에서 Telegraf pod가 계속 재시작됨
 
@@ -169,7 +188,42 @@ kubectl exec -n gpu-monitoring ds/telegraf -- ls -1 /var/log/pods
 
 즉 지금은 `중앙 저장 완료` 단계가 아니라 `중앙 수신 / 정규화 검증` 단계입니다.
 
-## 11. 기존 Telegraf 버전이 이미 설치되어 있음
+## 11. 버전 URL이 해석되지 않음
+
+증상:
+
+- `version check failed: <urlopen error ...>`
+- GPU와 서비스는 정상인데 최종 `validate`가 실패함
+
+원인:
+
+- 기본 설정의 `GPU_AGENT_LATEST_VERSION_URL`이 현재는 GitHub raw URL이거나,
+  운영 환경에서는 별도 내부 version endpoint일 수 있음
+- 현재 네트워크나 DNS에서 해당 이름을 해석하지 못함
+
+확인:
+
+```bash
+cat /etc/default/gpu-agent
+```
+
+```powershell
+Get-Content C:\gpu-agent\agent.env
+```
+
+테스트용 우회:
+
+```bash
+printf '%s' '{"latest_agent_version":"0.1.0","required":false}' > /tmp/latest_version.json
+sudo GPU_AGENT_LATEST_VERSION_URL=file:///tmp/latest_version.json /opt/gpu-agent/bin/gpu-agent validate
+```
+
+운영 원칙:
+
+- 테스트 단계에서는 GitHub raw URL을 그대로 사용 가능
+- 운영 단계에서는 `GPU_AGENT_LATEST_VERSION_URL`만 사내 version endpoint로 교체
+
+## 12. 기존 Telegraf 버전이 이미 설치되어 있음
 
 증상:
 
@@ -201,7 +255,7 @@ $env:TELEGRAF_FORCE_VERSION = "true"
 powershell -ExecutionPolicy Bypass -File .\install_windows.ps1
 ```
 
-## 12. 기존 dcgm-exporter 서비스 정의가 커스텀임
+## 13. 기존 dcgm-exporter 서비스 정의가 커스텀임
 
 증상:
 

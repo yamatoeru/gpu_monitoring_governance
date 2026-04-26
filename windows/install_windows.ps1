@@ -88,7 +88,7 @@ if exist "%ProgramFiles%\Python312\python.exe" (
 @"
 GPU_AGENT_ENV_TYPE=vm
 GPU_AGENT_CONFIG_VERSION=2026.04.23
-GPU_AGENT_LATEST_VERSION_URL=http://repo.internal/gpu-agent/latest_version.json
+GPU_AGENT_LATEST_VERSION_URL=https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examples/latest_version.json
 # GPU_AGENT_INGEST_URL=http://ingest.internal:8080/events
 # GPU_AGENT_INGEST_TOKEN=
 "@ | Out-File -Encoding ASCII "$BaseDir\agent.env"

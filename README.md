@@ -37,6 +37,8 @@
 ## 현재 구현 상태
 
 - Linux / Windows 설치 스크립트에 Telegraf 자동 설치 로직이 포함되어 있습니다.
+- Linux 설치 결과물은 기본적으로 `/opt/gpu-agent/bin/gpu-agent` 경로에 배치되며, PATH 심볼릭 링크는 자동 생성하지 않습니다.
+- Windows 설치 결과물은 기본적으로 `C:\gpu-agent\bin\gpu-agent.cmd` 경로에 배치됩니다.
 - Kubernetes에서는 `dcgm-exporter`와 `telegraf`가 분리되어 있고, Telegraf는 `dcgm-exporter`를 scrape하지 않습니다.
 - Kubernetes `validator`는 direct event를 `ingest`로 전송합니다.
 - Kubernetes `telegraf`는 컨테이너 로그를 읽어 `ingest`로 전송하도록 구성돼 있습니다.
@@ -47,6 +49,9 @@
 
 - 현재 `ingest`는 normalize까지 수행하며, ClickHouse insert는 아직 붙지 않았습니다.
 - 따라서 현재는 `수신 + 정규화 + 검증` 단계까지 구현된 상태입니다.
+- Linux / Windows 기본 설정의 버전 확인 URL은 현재 GitHub raw URL입니다.
+  - `https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examples/latest_version.json`
+- 운영 전환 시에는 `GPU_AGENT_LATEST_VERSION_URL`만 사내 URL로 바꾸면 같은 구조를 유지할 수 있습니다.
 
 ## 빠른 시작
 
@@ -59,6 +64,14 @@ git clone https://github.com/yamatoeru/gpu_monitoring_governance.git
 cd gpu_monitoring_governance
 ```
 
+현재 테스트 기준 저장소 URL:
+
+```text
+https://github.com/yamatoeru/gpu_monitoring_governance
+```
+
+운영 전환 시에는 이 저장소 URL과 `GPU_AGENT_LATEST_VERSION_URL`만 사내 Git / 사내 아티팩트 저장소 기준으로 교체하면 됩니다.
+
 - Git 사용 불가:
   - GitHub 리포지토리 화면에서 `Code` -> `Download ZIP`
   - 압축 해제 후 해당 디렉토리에서 설치 진행
@@ -70,13 +83,14 @@ cd gpu_monitoring_governance
 3. `linux/install_linux.sh` 실행
    이 단계는 `sudo`가 필요합니다. 설치 스크립트는 `telegraf` 패키지 설치, `/opt/gpu-agent` 파일 배치, `/etc/default/gpu-agent` 작성, `systemd` unit/timer 등록, 서비스 enable/restart를 수행합니다.
 4. `sudo /opt/gpu-agent/bin/gpu-agent validate`
+   `gpu-agent` 명령은 PATH에 자동 등록되지 않으므로 기본 실행 경로는 `/opt/gpu-agent/bin/gpu-agent` 입니다.
 
 ### Windows
 
 1. Python 3.10+ 준비
 2. 리포 ZIP 또는 패키징된 설치 파일을 Windows 서버에 복사
 3. `windows/install_windows.ps1` 실행
-   이 단계는 관리자 권한이 필요합니다. 설치 스크립트는 `C:\Program Files\Telegraf` 설치/갱신, Windows 서비스 등록/재시작, `C:\gpu-agent` 파일 배치, Scheduled Task 생성을 수행합니다.
+   이 단계는 관리자 권한이 필요합니다. 설치 스크립트는 `Telegraf ZIP` 다운로드 및 `C:\Program Files\Telegraf` 설치/갱신, Windows 서비스 등록/재시작, `C:\gpu-agent` 파일 배치, Scheduled Task 생성을 수행합니다.
 4. `C:\gpu-agent\bin\gpu-agent.cmd validate`
 
 ### Kubernetes

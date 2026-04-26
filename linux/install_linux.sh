@@ -78,7 +78,7 @@ mkdir -p /etc/default
 cat > /etc/default/gpu-agent <<'ENV'
 GPU_AGENT_ENV_TYPE=vm
 GPU_AGENT_CONFIG_VERSION=2026.04.23
-GPU_AGENT_LATEST_VERSION_URL=http://repo.internal/gpu-agent/latest_version.json
+GPU_AGENT_LATEST_VERSION_URL=https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examples/latest_version.json
 GPU_AGENT_DCGM_METRICS_URL=http://127.0.0.1:9400/metrics
 # GPU_AGENT_INGEST_URL=http://ingest.internal:8080/events
 # GPU_AGENT_INGEST_TOKEN=

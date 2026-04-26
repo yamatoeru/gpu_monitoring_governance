@@ -47,6 +47,14 @@ git clone https://github.com/yamatoeru/gpu_monitoring_governance.git
 cd gpu_monitoring_governance
 ```
 
+현재 테스트 기준 저장소 URL:
+
+```text
+https://github.com/yamatoeru/gpu_monitoring_governance
+```
+
+운영 전환 시에는 위 URL만 사내 Git 저장소 URL로 교체하면 됩니다.
+
 ### 방법 B. GitHub ZIP 다운로드
 
 Git을 설치하지 않은 서버나 Windows 환경에서는 GitHub 리포지토리 화면에서 아래 순서로 받으면 됩니다.
@@ -93,6 +101,19 @@ Windows PowerShell:
 $env:TELEGRAF_FORCE_VERSION = "true"
 ```
 
+### 기본 버전 확인 URL
+
+- Linux / Windows 기본 설정은 현재 아래 GitHub raw URL을 사용합니다.
+
+```text
+https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examples/latest_version.json
+```
+
+- 운영 전환 시에는 `GPU_AGENT_LATEST_VERSION_URL`만 사내 version endpoint로 교체하면 됩니다.
+- 이 주소를 해석할 수 없는 폐쇄망 환경에서는 `validate`가 `agent_version` 체크에서 실패할 수 있습니다.
+- 이 경우 운영자는 유효한 내부 URL을 제공하거나, 테스트 목적으로 로컬 `file://` 경로를 임시로 지정해야 합니다.
+- `upgrade` 명령은 현재 실제 업그레이드를 수행하지 않고, 업그레이드 필요 이벤트만 남깁니다.
+
 ### 기존 dcgm-exporter 서비스가 이미 있는 경우
 
 - Linux 설치 스크립트는 기존 `dcgm-exporter.service`가 번들 unit과 다르면 기본적으로 기존 unit을 유지합니다.
@@ -128,11 +149,24 @@ sudo ./install_linux.sh
 sudo /opt/gpu-agent/bin/gpu-agent validate
 ```
 
+기본 설치는 `/opt/gpu-agent/bin/gpu-agent`만 생성하며 PATH 심볼릭 링크는 만들지 않습니다.
+원하면 운영자가 아래처럼 링크를 추가할 수 있습니다.
+
+```bash
+sudo ln -s /opt/gpu-agent/bin/gpu-agent /usr/local/bin/gpu-agent
+```
+
 5. 결과 확인
 
 ```bash
 sudo cat /var/log/gpu-agent/last_result.json
 sudo cat /var/log/gpu-agent/heartbeat.json
+```
+
+일반 사용자로 빠르게 테스트하려면 결과 경로를 임시 디렉토리로 바꿔 실행할 수 있습니다.
+
+```bash
+GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test sudo /opt/gpu-agent/bin/gpu-agent validate
 ```
 
 ## 5. Windows 사용 절차
@@ -160,6 +194,8 @@ Set-ExecutionPolicy -Scope Process Bypass
 ```powershell
 C:\gpu-agent\bin\gpu-agent.cmd validate
 ```
+
+Windows도 기본 실행 파일은 `C:\gpu-agent\bin\gpu-agent.cmd`이며 PATH 등록은 자동으로 하지 않습니다.
 
 5. 결과 확인
 

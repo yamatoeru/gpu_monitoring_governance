@@ -9,6 +9,12 @@
 - 두 입력을 공통 normalized event 형태로 변환
 - stdout 또는 NDJSON 파일로 기록
 
+현재 범위:
+
+- normalize까지 수행
+- ClickHouse insert는 아직 미구현
+- 운영용 인증 / dedup / retry / dead-letter queue는 아직 미구현
+
 ## 실행
 
 ```bash
@@ -77,7 +83,6 @@ telegraf event:
 ## 다음 단계
 
 - ClickHouse HTTP insert 추가
-- VictoriaMetrics remote write 또는 metrics passthrough 분리
 - 인증 토큰 검증
 - 중복 제거 키 생성
 - dead-letter queue / retry 추가

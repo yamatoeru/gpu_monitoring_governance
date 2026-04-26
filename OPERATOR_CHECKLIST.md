@@ -39,6 +39,7 @@
 - readiness / liveness probe 정책 확인
 - stdout log 수집 여부 결정
 - ClickHouse insert 추가 전까지는 normalize 로그만 남는다는 점을 운영자에게 공유
+- 내부 version endpoint URL과 DNS 해석 가능 범위를 확정
 
 ## 3. 네트워크 / 보안
 
@@ -62,16 +63,22 @@
 
 - Python 3.10+ 설치 여부 확인
 - NVIDIA 드라이버 / `nvidia-smi` 동작 여부 확인
+- `dcgm-exporter` 설치 방식 결정
+  - 기존 운영 바이너리 / 패키지 / 컨테이너 방식 중 무엇을 사용할지 확정
 - `telegraf` 자동 설치가 허용되는지 확인
 - 폐쇄망이면 `TELEGRAF_DEB_URL` 사내 미러 경로 준비
+- 테스트 단계에서는 기본 GitHub raw URL 사용 가능 여부 확인
+- 운영 단계에서는 `GPU_AGENT_LATEST_VERSION_URL`이 가리킬 내부 version endpoint 준비
 - systemd 서비스 정책과 로그 보관 경로 확인
 
 ## 6. Windows 운영 준비
 
 - Python 3.10+ 설치 여부 확인
 - PowerShell 실행 정책 예외 절차 공유
-- Telegraf MSI 다운로드 허용 여부 확인
-- 폐쇄망이면 `TELEGRAF_MSI_URL` 사내 배포 경로 준비
+- Telegraf ZIP 다운로드 허용 여부 확인
+- 폐쇄망이면 `TELEGRAF_ZIP_URL` 사내 배포 경로 준비
+- 테스트 단계에서는 기본 GitHub raw URL 사용 가능 여부 확인
+- 운영 단계에서는 `GPU_AGENT_LATEST_VERSION_URL`이 가리킬 내부 version endpoint 준비
 - OpenSSH 또는 RDP 운영 접근 방식 확정
 - Windows Event Log / 서비스 상태 수집 범위 정의
 
@@ -97,12 +104,15 @@
 - `sudo /opt/gpu-agent/bin/gpu-agent validate`
 - `/var/log/gpu-agent/last_result.json` 확인
 - `systemctl status telegraf` 확인
+- `systemctl status dcgm-exporter` 확인
+- `curl http://127.0.0.1:9400/metrics`에서 `DCGM_FI_DEV_GPU_UTIL` 확인
 
 ### Windows
 
 - `C:\gpu-agent\bin\gpu-agent.cmd validate`
 - `C:\gpu-agent\status\last_result.json` 확인
 - `Get-Service telegraf` 확인
+- `where.exe nvidia-smi` / `nvidia-smi` 확인
 
 ## 9. 현재 남은 운영 작업
 
