@@ -31,6 +31,7 @@
 - normalized event 스키마 확정
 - partition key / order key / TTL 정책 확정
 - 운영 계정과 접근 제어 정책 확정
+- 초기 DDL은 [ingest/README.md](ingest/README.md) 의 `ClickHouse 스키마 예시`를 기준으로 시작
 
 ### ingest
 
@@ -114,6 +115,107 @@
 - `C:\gpu-agent\status\last_result.json` 확인
 - `Get-Service telegraf` 확인
 - `where.exe nvidia-smi` / `nvidia-smi` 확인
+
+### ClickHouse 점검 쿼리
+
+기본 테이블:
+
+```sql
+SELECT count()
+FROM gpu_monitoring.events;
+```
+
+최근 이벤트 확인:
+
+```sql
+SELECT
+    event_time,
+    source,
+    host,
+    component,
+    event_type,
+    severity,
+    error_code
+FROM gpu_monitoring.events
+ORDER BY event_time DESC
+LIMIT 50;
+```
+
+최근 실패 이벤트만 확인:
+
+```sql
+SELECT
+    event_time,
+    host,
+    component,
+    event_type,
+    error_code,
+    message,
+    root_cause,
+    recommended_action
+FROM gpu_monitoring.events
+WHERE severity = 'error'
+ORDER BY event_time DESC
+LIMIT 50;
+```
+
+호스트별 최근 이벤트 건수:
+
+```sql
+SELECT
+    host,
+    count() AS event_count
+FROM gpu_monitoring.events
+WHERE event_time >= toString(now() - INTERVAL 1 DAY)
+GROUP BY host
+ORDER BY event_count DESC;
+```
+
+이벤트 유형별 건수:
+
+```sql
+SELECT
+    event_type,
+    error_code,
+    count() AS event_count
+FROM gpu_monitoring.events
+WHERE event_time >= toString(now() - INTERVAL 1 DAY)
+GROUP BY event_type, error_code
+ORDER BY event_count DESC;
+```
+
+특정 호스트의 최근 validator 결과:
+
+```sql
+SELECT
+    event_time,
+    event_type,
+    error_code,
+    message
+FROM gpu_monitoring.events
+WHERE component = 'gpu-agent-validator'
+  AND host = '<host>'
+ORDER BY event_time DESC
+LIMIT 20;
+```
+
+성공/실패 추이 단순 확인:
+
+```sql
+SELECT
+    severity,
+    count() AS event_count
+FROM gpu_monitoring.events
+WHERE event_time >= toString(now() - INTERVAL 1 DAY)
+GROUP BY severity
+ORDER BY event_count DESC;
+```
+
+참고:
+
+- 현재 `event_time` 컬럼은 `String` 입니다.
+- 운영 고도화 시에는 `DateTime` 계열과 파티션 키를 포함한 스키마로 확장하는 것이 좋습니다.
+- 현재 기본 DDL은 [ingest/README.md](ingest/README.md) 에 있습니다.
 
 ## 9. 현재 남은 운영 작업
 
