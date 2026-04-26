@@ -42,7 +42,7 @@ if command -v telegraf >/dev/null 2>&1; then
       TELEGRAF_ACTION="replace"
       install_telegraf
     else
-      echo "Preserving existing Telegraf. Set TELEGRAF_FORCE_VERSION=true to replace it."
+      echo "Preserving existing Telegraf. Run 'sudo TELEGRAF_FORCE_VERSION=true ./install_linux.sh' to replace it."
     fi
   fi
 else
@@ -68,7 +68,7 @@ elif ! cmp -s dcgm-exporter "${DCGM_EXPORTER_TARGET}"; then
   else
     DCGM_EXPORTER_ACTION="preserve"
     echo "Existing dcgm-exporter binary differs from bundled version; preserving it."
-    echo "Set GPU_AGENT_MANAGE_DCGM_SERVICE=true to replace it."
+    echo "Run 'sudo GPU_AGENT_MANAGE_DCGM_SERVICE=true ./install_linux.sh' to replace it."
   fi
 fi
 if [[ ! -f "${SYSTEMD_DIR}/dcgm-exporter.service" ]]; then
@@ -80,7 +80,7 @@ elif ! cmp -s dcgm-exporter.service "${SYSTEMD_DIR}/dcgm-exporter.service"; then
     echo "Replaced existing dcgm-exporter.service and backed up the previous file."
   else
     echo "Existing dcgm-exporter.service differs from bundled unit; preserving it."
-    echo "Set GPU_AGENT_MANAGE_DCGM_SERVICE=true to replace it."
+    echo "Run 'sudo GPU_AGENT_MANAGE_DCGM_SERVICE=true ./install_linux.sh' to replace it."
   fi
 fi
 
