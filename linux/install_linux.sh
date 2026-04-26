@@ -6,6 +6,7 @@ BIN_DIR="${BASE_DIR}/bin"
 PKG_DIR="${BASE_DIR}/pkg"
 CONF_DIR="${BASE_DIR}/conf"
 LOG_DIR="/var/log/gpu-agent"
+AGENT_LINK_TARGET="/usr/local/bin/gpu-agent"
 TELEGRAF_CONF_TARGET="/etc/telegraf/telegraf.d/gpu-agent.conf"
 SYSTEMD_DIR="/etc/systemd/system"
 DCGM_EXPORTER_TARGET="/usr/local/bin/dcgm-exporter"
@@ -15,6 +16,7 @@ TELEGRAF_TMP_DEB="/tmp/telegraf_${TELEGRAF_VERSION}_amd64.deb"
 TELEGRAF_FORCE_VERSION="${TELEGRAF_FORCE_VERSION:-false}"
 MANAGE_DCGM_SERVICE="${GPU_AGENT_MANAGE_DCGM_SERVICE:-false}"
 DCGM_EXPORTER_ACTION="install"
+GPU_AGENT_LINK_ACTION="install"
 
 mkdir -p "${BIN_DIR}" "${PKG_DIR}" "${CONF_DIR}" "${LOG_DIR}"
 
@@ -92,6 +94,23 @@ exec python3 -m gpu_agent.main "$@"
 WRAP
 chmod +x "${BIN_DIR}/gpu-agent"
 
+if [[ -L "${AGENT_LINK_TARGET}" ]]; then
+  CURRENT_LINK_TARGET="$(readlink "${AGENT_LINK_TARGET}")"
+  if [[ "${CURRENT_LINK_TARGET}" != "${BIN_DIR}/gpu-agent" ]]; then
+    GPU_AGENT_LINK_ACTION="preserve"
+    echo "Existing gpu-agent symlink points to ${CURRENT_LINK_TARGET}; preserving it."
+  fi
+elif [[ -e "${AGENT_LINK_TARGET}" ]]; then
+  GPU_AGENT_LINK_ACTION="preserve"
+  echo "Existing ${AGENT_LINK_TARGET} is not a managed symlink; preserving it."
+else
+  ln -s "${BIN_DIR}/gpu-agent" "${AGENT_LINK_TARGET}"
+fi
+
+if [[ "${GPU_AGENT_LINK_ACTION}" != "preserve" ]]; then
+  ln -sfn "${BIN_DIR}/gpu-agent" "${AGENT_LINK_TARGET}"
+fi
+
 mkdir -p /etc/default
 cat > /etc/default/gpu-agent <<'ENV'
 GPU_AGENT_ENV_TYPE=vm
@@ -123,6 +142,11 @@ elif [[ "${DCGM_EXPORTER_ACTION}" == "replace" ]]; then
 else
   echo "  - installed bundled dcgm-exporter binary"
 fi
-echo "  1) sudo /opt/gpu-agent/bin/gpu-agent validate"
+if [[ "${GPU_AGENT_LINK_ACTION}" == "preserve" ]]; then
+  echo "  - preserved existing /usr/local/bin/gpu-agent"
+else
+  echo "  - linked /usr/local/bin/gpu-agent to ${BIN_DIR}/gpu-agent"
+fi
+echo "  1) sudo gpu-agent validate"
 echo "  2) sudo cat /var/log/gpu-agent/last_result.json"
 echo "     - non-root validate is supported, but the default guide uses sudo for consistency"

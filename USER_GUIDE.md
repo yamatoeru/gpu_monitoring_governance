@@ -161,15 +161,10 @@ sudo ./install_linux.sh
 4. 검증 실행
 
 ```bash
-sudo /opt/gpu-agent/bin/gpu-agent validate
+sudo gpu-agent validate
 ```
-
-기본 설치는 `/opt/gpu-agent/bin/gpu-agent`만 생성하며 PATH 심볼릭 링크는 만들지 않습니다.
-원하면 운영자가 아래처럼 링크를 추가할 수 있습니다.
-
-```bash
-sudo ln -s /opt/gpu-agent/bin/gpu-agent /usr/local/bin/gpu-agent
-```
+설치 스크립트는 기본적으로 `/usr/local/bin/gpu-agent` 심볼릭 링크를 생성합니다.
+기존 파일이나 다른 심볼릭 링크가 있으면 보존하고 경고만 출력합니다.
 
 5. 결과 확인
 
