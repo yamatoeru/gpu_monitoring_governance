@@ -124,3 +124,6 @@ else
   echo "  - installed bundled dcgm-exporter binary"
 fi
 echo "  1) /opt/gpu-agent/bin/gpu-agent validate"
+echo "     - if /var/log/gpu-agent is not writable, results are written to /tmp/gpu-agent-\$USER"
+echo "  2) cat /tmp/gpu-agent-\$USER/last_result.json"
+echo "     - or use 'sudo cat /var/log/gpu-agent/last_result.json' if validate was run with sudo"
