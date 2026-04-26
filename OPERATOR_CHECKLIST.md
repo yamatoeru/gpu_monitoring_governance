@@ -8,7 +8,7 @@
 - Kubernetes / Linux GPU 노드에서는 `dcgm-exporter -> vmagent -> VictoriaMetrics` 경로를 사용
 - Kubernetes / Linux GPU 노드에서는 `telegraf -> ingest -> ClickHouse` 경로를 사용
 - Windows 노드에서는 `telegraf`가 메트릭과 로그를 모두 생성하고, 메트릭은 `vmagent`가 scrape하도록 설계
-- `gpu-ingest`는 수신 게이트웨이이며, 현재 리포 기준으로는 normalize까지만 수행한다는 점을 운영 범위에 반영
+- `gpu-ingest`는 수신 게이트웨이이며, 현재 리포 기준으로는 normalize 후 ClickHouse HTTP insert를 수행할 수 있다는 점을 운영 범위에 반영
 
 ## 2. 중앙 수집 계층 준비
 
@@ -36,9 +36,10 @@
 
 - `gpu-ingest`를 어느 클러스터 / 네임스페이스에 둘지 결정
 - `Service` 주소와 DNS 명세 확정
+- `CLICKHOUSE_URL`, `CLICKHOUSE_DATABASE`, `CLICKHOUSE_TABLE`, 인증 정보 전달 방식 확정
+- Kubernetes에서는 `gpu-ingest-clickhouse` Secret 키 구성을 표준화
 - readiness / liveness probe 정책 확인
 - stdout log 수집 여부 결정
-- ClickHouse insert 추가 전까지는 normalize 로그만 남는다는 점을 운영자에게 공유
 - 내부 version endpoint URL과 DNS 해석 가능 범위를 확정
 
 ## 3. 네트워크 / 보안
@@ -97,6 +98,7 @@
 - `kubectl get cronjob -n gpu-monitoring`
 - `kubectl logs -n gpu-monitoring deployment/gpu-ingest --tail=50`
 - 수동 validator job 실행 후 `gpu-ingest` 수신 확인
+- ClickHouse table row 증가 여부 확인
 
 ### Linux
 
@@ -115,7 +117,6 @@
 
 ## 9. 현재 남은 운영 작업
 
-- `gpu-ingest`에 ClickHouse insert 추가
 - 인증 / 고객 식별 / dedup / retry 정책 추가
 - 운영 대시보드와 알림 룰 연결
 - 장기 보관 및 재처리 전략 정리

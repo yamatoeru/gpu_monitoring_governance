@@ -27,6 +27,42 @@ spec:
               value: "8080"
             - name: INGEST_OUTPUT_PATH
               value: "/var/log/gpu-ingest/events.ndjson"
+            - name: CLICKHOUSE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_URL
+                  optional: true
+            - name: CLICKHOUSE_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_DATABASE
+                  optional: true
+            - name: CLICKHOUSE_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_TABLE
+                  optional: true
+            - name: CLICKHOUSE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_USER
+                  optional: true
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_PASSWORD
+                  optional: true
+            - name: CLICKHOUSE_TIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_TIMEOUT
+                  optional: true
           volumeMounts:
             - name: app
               mountPath: /app

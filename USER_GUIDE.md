@@ -275,6 +275,15 @@ python3 -m ingest.server
 INGEST_OUTPUT_PATH=/tmp/gpu-monitoring-events.ndjson python3 -m ingest.server
 ```
 
+### ClickHouse 적재 포함 실행
+
+```bash
+CLICKHOUSE_URL=http://clickhouse.monitoring.svc.cluster.local:8123 \
+CLICKHOUSE_DATABASE=gpu_monitoring \
+CLICKHOUSE_TABLE=events \
+python3 -m ingest.server
+```
+
 ### health check
 
 ```bash
@@ -293,9 +302,10 @@ curl http://127.0.0.1:8080/health
   - validator direct event
   - Telegraf log event
   - `gpu-ingest` normalized event 로그
+  - `CLICKHOUSE_URL` 설정 시 ClickHouse row
 
 ## 9. 현재 한계
 
-- `gpu-ingest`는 normalize까지만 수행합니다.
-- ClickHouse insert는 아직 연결되어 있지 않습니다.
-- 따라서 현재 단계에서는 중앙 저장 검증이 아니라 수신 / 정규화 검증 단계입니다.
+- `gpu-ingest`는 normalize 후 선택적으로 ClickHouse HTTP insert까지 수행합니다.
+- 다만 재시도 큐, 인증, dedup, dead-letter 처리는 아직 없습니다.
+- 따라서 현재 단계에서는 중앙 저장은 가능하지만 운영 신뢰성 기능은 추가 구현이 필요합니다.

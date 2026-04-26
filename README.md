@@ -38,7 +38,7 @@
 
 - Linux / Windows 설치 스크립트에 Telegraf 자동 설치 로직이 포함되어 있습니다.
 - Linux 설치 스크립트에는 호스트 기반 `dcgm-exporter` 호환 서비스 자동 설치 로직이 포함되어 있습니다.
-- Linux 설치 결과물은 기본적으로 `/opt/gpu-agent/bin/gpu-agent` 경로에 배치되며, PATH 심볼릭 링크는 자동 생성하지 않습니다.
+- Linux 설치 결과물은 기본적으로 `/opt/gpu-agent/bin/gpu-agent` 경로에 배치되며, 설치 스크립트는 `/usr/local/bin/gpu-agent` 심볼릭 링크를 자동 생성합니다.
 - Windows 설치 결과물은 기본적으로 `C:\gpu-agent\bin\gpu-agent.cmd` 경로에 배치됩니다.
 - Kubernetes에서는 `dcgm-exporter`와 `telegraf`가 분리되어 있고, Telegraf는 `dcgm-exporter`를 scrape하지 않습니다.
 - Kubernetes `validator`는 direct event를 `ingest`로 전송합니다.
@@ -48,8 +48,8 @@
 
 주의:
 
-- 현재 `ingest`는 normalize까지 수행하며, ClickHouse insert는 아직 붙지 않았습니다.
-- 따라서 현재는 `수신 + 정규화 + 검증` 단계까지 구현된 상태입니다.
+- 현재 `ingest`는 normalize를 수행하며, `CLICKHOUSE_URL`이 설정되면 ClickHouse HTTP insert까지 수행합니다.
+- 따라서 현재는 `수신 + 정규화 + 저장` 단계까지 구현된 상태입니다.
 - Linux / Windows 기본 설정의 버전 확인 URL은 현재 GitHub raw URL입니다.
   - `https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examples/latest_version.json`
 - 운영 전환 시에는 `GPU_AGENT_LATEST_VERSION_URL`만 사내 URL로 바꾸면 같은 구조를 유지할 수 있습니다.
@@ -159,6 +159,18 @@ Kubernetes 내부 주소:
 http://gpu-ingest.gpu-monitoring.svc.cluster.local:8080/events
 ```
 
+선택적 ClickHouse 환경변수:
+
+```text
+CLICKHOUSE_URL=http://clickhouse.monitoring.svc.cluster.local:8123
+CLICKHOUSE_DATABASE=gpu_monitoring
+CLICKHOUSE_TABLE=events
+CLICKHOUSE_USER=<optional>
+CLICKHOUSE_PASSWORD=<optional>
+```
+
+Kubernetes 배포에서는 `gpu-ingest-clickhouse` Secret에 위 키들을 넣으면 `gpu-ingest` Deployment가 이를 읽습니다.
+
 ## 문서
 
 - [사용자 설명서](USER_GUIDE.md)
@@ -169,7 +181,6 @@ http://gpu-ingest.gpu-monitoring.svc.cluster.local:8080/events
 
 ## 다음 단계
 
-- `gpu-ingest`에 ClickHouse insert 추가
 - Telegraf / validator event 스키마 고정
 - 인증 토큰 / 고객 식별 / 중복 제거 추가
 - 운영 대시보드 및 알림 룰 연결

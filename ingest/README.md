@@ -11,8 +11,8 @@
 
 현재 범위:
 
-- normalize까지 수행
-- ClickHouse insert는 아직 미구현
+- normalize 수행
+- 선택적으로 ClickHouse HTTP insert 수행
 - 운영용 인증 / dedup / retry / dead-letter queue는 아직 미구현
 
 ## 실행
@@ -30,12 +30,35 @@ python3 -m ingest.server
   기본값: `8080`
 - `INGEST_OUTPUT_PATH`
   설정 시 normalized event를 NDJSON 파일로 추가 기록
+- `CLICKHOUSE_URL`
+  설정 시 normalized event를 ClickHouse HTTP API로 insert
+- `CLICKHOUSE_DATABASE`
+  기본값: `gpu_monitoring`
+- `CLICKHOUSE_TABLE`
+  기본값: `events`
+- `CLICKHOUSE_USER`
+  Basic auth 사용자명
+- `CLICKHOUSE_PASSWORD`
+  Basic auth 비밀번호
+- `CLICKHOUSE_TIMEOUT`
+  기본값: `5`
 
 예:
 
 ```bash
 INGEST_OUTPUT_PATH=/tmp/gpu-monitoring-events.ndjson python3 -m ingest.server
 ```
+
+ClickHouse insert까지 함께 쓰려면:
+
+```bash
+CLICKHOUSE_URL=http://clickhouse.monitoring.svc.cluster.local:8123 \
+CLICKHOUSE_DATABASE=gpu_monitoring \
+CLICKHOUSE_TABLE=events \
+python3 -m ingest.server
+```
+
+Kubernetes에서는 `gpu-ingest-clickhouse` Secret에 같은 키를 넣어 `gpu-ingest` Deployment에 주입할 수 있습니다.
 
 ## 엔드포인트
 
@@ -80,9 +103,41 @@ telegraf event:
 }
 ```
 
+## ClickHouse 스키마 예시
+
+```sql
+CREATE DATABASE IF NOT EXISTS gpu_monitoring;
+
+CREATE TABLE IF NOT EXISTS gpu_monitoring.events
+(
+    event_time String,
+    source String,
+    host String,
+    env_type String,
+    os_type String,
+    component String,
+    event_type String,
+    severity String,
+    error_code String,
+    message String,
+    root_cause String,
+    recommended_action String,
+    agent_version String,
+    config_version String,
+    stream String,
+    logtag String,
+    path String,
+    checks_json String,
+    extra_json String,
+    raw_payload_json String,
+    raw_metric_json String
+)
+ENGINE = MergeTree
+ORDER BY (event_time, host, component, event_type);
+```
+
 ## 다음 단계
 
-- ClickHouse HTTP insert 추가
 - 인증 토큰 검증
 - 중복 제거 키 생성
 - dead-letter queue / retry 추가

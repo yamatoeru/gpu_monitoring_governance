@@ -191,15 +191,15 @@ kubectl exec -n gpu-monitoring ds/telegraf -- ls -1 /var/log/pods
 - sender -> ingest 수신
 - payload normalize
 - Kubernetes 내 `gpu-ingest` 배포
+- `CLICKHOUSE_URL` 설정 시 ClickHouse HTTP insert
 
 아직 미구현:
 
-- ClickHouse insert
 - 재시도 큐
 - 인증 검증
 - dead-letter 처리
 
-즉 지금은 `중앙 저장 완료` 단계가 아니라 `중앙 수신 / 정규화 검증` 단계입니다.
+즉 지금은 `중앙 저장`은 가능하지만, 운영용 내결함성과 인증 계층은 아직 추가 구현이 필요한 단계입니다.
 
 ## 11. 버전 URL이 해석되지 않음
 

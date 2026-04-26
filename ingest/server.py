@@ -5,6 +5,7 @@ import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
+from .clickhouse import insert_records, is_enabled as clickhouse_enabled
 from .normalizer import normalize_payload
 
 
@@ -57,6 +58,11 @@ class Handler(BaseHTTPRequestHandler):
         for record in normalized:
             print(json.dumps(record, ensure_ascii=False), flush=True)
         _append_ndjson(normalized)
+        try:
+            insert_records(normalized)
+        except RuntimeError as exc:
+            self._send_json(502, {"error": "clickhouse_insert_failed", "detail": str(exc)})
+            return
 
         self._send_json(200, {"accepted": len(normalized)})
 
@@ -68,14 +74,15 @@ def main() -> None:
     httpd = HTTPServer((HOST, PORT), Handler)
     print(
         json.dumps(
-            {
-                "status": "starting",
-                "host": HOST,
-                "port": PORT,
-                "output_path": OUTPUT_PATH,
-            },
-            ensure_ascii=False,
-        ),
+                {
+                    "status": "starting",
+                    "host": HOST,
+                    "port": PORT,
+                    "output_path": OUTPUT_PATH,
+                    "clickhouse_enabled": clickhouse_enabled(),
+                },
+                ensure_ascii=False,
+            ),
         flush=True,
     )
     httpd.serve_forever()
