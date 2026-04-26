@@ -63,7 +63,7 @@ where.exe nvidia-smi
 - `dcgm-exporter` 서비스 미기동
 - `telegraf` 서비스 미기동
 - 버전 URL 접근 실패
-- `/var/log/gpu-agent` 쓰기 권한 부족
+- 기본 결과 경로(`/var/log/gpu-agent`) 쓰기 권한 부족
 
 확인:
 
@@ -74,10 +74,22 @@ systemctl status telegraf
 cat /var/log/gpu-agent/last_result.json
 ```
 
-일반 사용자 테스트:
+일반 사용자 실행 시 기본 동작:
+
+- `/var/log/gpu-agent`가 쓰기 불가하면 `/tmp/gpu-agent-<user>`로 자동 전환
+- stderr에 fallback 안내 출력
+
+예:
 
 ```bash
-GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test sudo /opt/gpu-agent/bin/gpu-agent validate
+/opt/gpu-agent/bin/gpu-agent validate
+cat /tmp/gpu-agent-$USER/last_result.json
+```
+
+명시적으로 결과 경로를 고정하려면:
+
+```bash
+GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test /opt/gpu-agent/bin/gpu-agent validate
 ```
 
 참고:

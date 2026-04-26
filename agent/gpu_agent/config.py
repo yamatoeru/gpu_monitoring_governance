@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import platform
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,6 +28,26 @@ def _load_env_file(path: Path) -> None:
             os.environ.setdefault(key, value)
 
 
+def _default_linux_result_dir() -> tuple[str, str]:
+    preferred = Path("/var/log/gpu-agent")
+    env_override = os.getenv("GPU_AGENT_RESULT_DIR_LINUX")
+    if env_override:
+        return env_override, ""
+
+    if preferred.exists() and os.access(preferred, os.W_OK):
+        return str(preferred), ""
+
+    if preferred.parent.exists() and os.access(preferred.parent, os.W_OK):
+        return str(preferred), ""
+
+    fallback = Path(tempfile.gettempdir()) / f"gpu-agent-{os.getenv('USER', 'user')}"
+    notice = (
+        f"result directory '{preferred}' is not writable; "
+        f"using '{fallback}' for this run"
+    )
+    return str(fallback), notice
+
+
 @dataclass
 class AgentConfig:
     env_type: str = "vm"
@@ -41,6 +62,7 @@ class AgentConfig:
     dcgm_service_linux: str = "dcgm-exporter"
     telegraf_service_windows: str = "telegraf"
     heartbeat_file_name: str = "heartbeat.json"
+    result_dir_notice: str = ""
 
     @property
     def result_dir(self) -> Path:
@@ -52,6 +74,7 @@ class AgentConfig:
 def load_config() -> AgentConfig:
     env_file = Path(os.getenv("GPU_AGENT_ENV_FILE", str(_default_env_file())))
     _load_env_file(env_file)
+    linux_result_dir, result_dir_notice = _default_linux_result_dir()
 
     return AgentConfig(
         env_type=os.getenv("GPU_AGENT_ENV_TYPE", "vm"),
@@ -62,7 +85,7 @@ def load_config() -> AgentConfig:
         ),
         ingest_url=os.getenv("GPU_AGENT_INGEST_URL", ""),
         ingest_token=os.getenv("GPU_AGENT_INGEST_TOKEN", ""),
-        linux_result_dir=os.getenv("GPU_AGENT_RESULT_DIR_LINUX", "/var/log/gpu-agent"),
+        linux_result_dir=linux_result_dir,
         windows_result_dir=os.getenv("GPU_AGENT_RESULT_DIR_WINDOWS", r"C:\gpu-agent\status"),
         dcgm_metrics_url=os.getenv(
             "GPU_AGENT_DCGM_METRICS_URL",
@@ -71,4 +94,5 @@ def load_config() -> AgentConfig:
         telegraf_service_linux=os.getenv("GPU_AGENT_TELEGRAF_SERVICE_LINUX", "telegraf"),
         dcgm_service_linux=os.getenv("GPU_AGENT_DCGM_SERVICE_LINUX", "dcgm-exporter"),
         telegraf_service_windows=os.getenv("GPU_AGENT_TELEGRAF_SERVICE_WINDOWS", "telegraf"),
+        result_dir_notice=result_dir_notice,
     )

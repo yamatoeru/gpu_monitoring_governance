@@ -98,6 +98,7 @@ https://github.com/yamatoeru/gpu_monitoring_governance
    이 단계는 `sudo`가 필요합니다. 설치 스크립트는 `telegraf` 패키지 설치, 호스트 기반 `dcgm-exporter` 호환 서비스 배치, `/opt/gpu-agent` 파일 배치, `/etc/default/gpu-agent` 작성, `systemd` unit/timer 등록, 서비스 enable/restart를 수행합니다.
 4. `sudo /opt/gpu-agent/bin/gpu-agent validate`
    `gpu-agent` 명령은 PATH에 자동 등록되지 않으므로 기본 실행 경로는 `/opt/gpu-agent/bin/gpu-agent` 입니다.
+   일반 사용자로 실행하면 결과 파일 경로가 자동으로 `/tmp/gpu-agent-<user>`로 전환될 수 있습니다.
 
 ### Windows
 

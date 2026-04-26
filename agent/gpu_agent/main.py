@@ -117,6 +117,8 @@ def main() -> None:
 
     args = parser.parse_args()
     config = load_config()
+    if config.result_dir_notice:
+        print(f"[GPU Agent] NOTICE - {config.result_dir_notice}", file=sys.stderr)
     ensure_dir(config.result_dir)
 
     if args.command == "version":

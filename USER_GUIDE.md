@@ -178,10 +178,20 @@ sudo cat /var/log/gpu-agent/last_result.json
 sudo cat /var/log/gpu-agent/heartbeat.json
 ```
 
-일반 사용자로 빠르게 테스트하려면 결과 경로를 임시 디렉토리로 바꿔 실행할 수 있습니다.
+일반 사용자로 실행하면 `/var/log/gpu-agent` 대신 `/tmp/gpu-agent-<user>`로 자동 전환될 수 있습니다.
+이 경우 stderr에 fallback 안내가 출력됩니다.
+
+예:
 
 ```bash
-GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test sudo /opt/gpu-agent/bin/gpu-agent validate
+/opt/gpu-agent/bin/gpu-agent validate
+cat /tmp/gpu-agent-$USER/last_result.json
+```
+
+명시적으로 결과 경로를 지정하고 싶다면 아래처럼 실행할 수도 있습니다.
+
+```bash
+GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test /opt/gpu-agent/bin/gpu-agent validate
 ```
 
 ## 5. Windows 사용 절차
