@@ -8,11 +8,13 @@ CONF_DIR="${BASE_DIR}/conf"
 LOG_DIR="/var/log/gpu-agent"
 TELEGRAF_CONF_TARGET="/etc/telegraf/telegraf.d/gpu-agent.conf"
 SYSTEMD_DIR="/etc/systemd/system"
+DCGM_EXPORTER_TARGET="/usr/local/bin/dcgm-exporter"
 TELEGRAF_VERSION="${TELEGRAF_VERSION:-1.33.3}"
 TELEGRAF_DEB_URL="${TELEGRAF_DEB_URL:-https://dl.influxdata.com/telegraf/releases/telegraf_${TELEGRAF_VERSION}-1_amd64.deb}"
 TELEGRAF_TMP_DEB="/tmp/telegraf_${TELEGRAF_VERSION}_amd64.deb"
 TELEGRAF_FORCE_VERSION="${TELEGRAF_FORCE_VERSION:-false}"
 MANAGE_DCGM_SERVICE="${GPU_AGENT_MANAGE_DCGM_SERVICE:-false}"
+DCGM_EXPORTER_ACTION="install"
 
 mkdir -p "${BIN_DIR}" "${PKG_DIR}" "${CONF_DIR}" "${LOG_DIR}"
 
@@ -53,6 +55,22 @@ cp -r ../agent/gpu_agent "${PKG_DIR}/"
 cp linux-telegraf-gpu-agent.conf "${TELEGRAF_CONF_TARGET}"
 cp gpu-agent-validate.service "${SYSTEMD_DIR}/gpu-agent-validate.service"
 cp gpu-agent-validate.timer "${SYSTEMD_DIR}/gpu-agent-validate.timer"
+if [[ ! -f "${DCGM_EXPORTER_TARGET}" ]]; then
+  cp dcgm-exporter "${DCGM_EXPORTER_TARGET}"
+  chmod +x "${DCGM_EXPORTER_TARGET}"
+elif ! cmp -s dcgm-exporter "${DCGM_EXPORTER_TARGET}"; then
+  if [[ "${MANAGE_DCGM_SERVICE}" == "true" ]]; then
+    cp "${DCGM_EXPORTER_TARGET}" "${DCGM_EXPORTER_TARGET}.gpu-agent.bak"
+    cp dcgm-exporter "${DCGM_EXPORTER_TARGET}"
+    chmod +x "${DCGM_EXPORTER_TARGET}"
+    DCGM_EXPORTER_ACTION="replace"
+    echo "Replaced existing dcgm-exporter binary and backed up the previous file."
+  else
+    DCGM_EXPORTER_ACTION="preserve"
+    echo "Existing dcgm-exporter binary differs from bundled version; preserving it."
+    echo "Set GPU_AGENT_MANAGE_DCGM_SERVICE=true to replace it."
+  fi
+fi
 if [[ ! -f "${SYSTEMD_DIR}/dcgm-exporter.service" ]]; then
   cp dcgm-exporter.service "${SYSTEMD_DIR}/dcgm-exporter.service"
 elif ! cmp -s dcgm-exporter.service "${SYSTEMD_DIR}/dcgm-exporter.service"; then
@@ -87,6 +105,8 @@ ENV
 systemctl daemon-reload
 systemctl enable telegraf
 systemctl restart telegraf
+systemctl enable dcgm-exporter
+systemctl restart dcgm-exporter
 systemctl enable gpu-agent-validate.timer
 systemctl start gpu-agent-validate.timer
 
@@ -96,6 +116,11 @@ if [[ "${TELEGRAF_ACTION}" == "preserve" ]]; then
 elif [[ "${TELEGRAF_ACTION}" == "replace" ]]; then
   echo "  - replaced telegraf with version ${TELEGRAF_VERSION}"
 fi
-echo "  1) place dcgm-exporter binary at /usr/local/bin/dcgm-exporter"
-echo "  2) systemctl enable --now dcgm-exporter"
-echo "  3) /opt/gpu-agent/bin/gpu-agent validate"
+if [[ "${DCGM_EXPORTER_ACTION}" == "preserve" ]]; then
+  echo "  - preserved existing dcgm-exporter binary"
+elif [[ "${DCGM_EXPORTER_ACTION}" == "replace" ]]; then
+  echo "  - replaced dcgm-exporter binary with bundled version"
+else
+  echo "  - installed bundled dcgm-exporter binary"
+fi
+echo "  1) /opt/gpu-agent/bin/gpu-agent validate"

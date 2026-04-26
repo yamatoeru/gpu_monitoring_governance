@@ -116,8 +116,9 @@ https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examp
 
 ### 기존 dcgm-exporter 서비스가 이미 있는 경우
 
-- Linux 설치 스크립트는 기존 `dcgm-exporter.service`가 번들 unit과 다르면 기본적으로 기존 unit을 유지합니다.
-- 번들 unit으로 강제 교체하려면 아래 환경변수를 사용합니다.
+- Linux 설치 스크립트는 기본적으로 번들 `dcgm-exporter` 호환 바이너리와 service unit을 설치합니다.
+- 기존 `dcgm-exporter` 바이너리나 `dcgm-exporter.service`가 번들 파일과 다르면 기본적으로 기존 파일을 유지합니다.
+- 번들 바이너리와 unit으로 강제 교체하려면 아래 환경변수를 사용합니다.
 
 ```bash
 GPU_AGENT_MANAGE_DCGM_SERVICE=true
@@ -137,6 +138,7 @@ sudo ./install_linux.sh
 설치 시 `sudo`가 필요한 이유:
 
 - `telegraf` 패키지 설치 또는 교체
+- `/usr/local/bin/dcgm-exporter` 바이너리 배치 또는 교체
 - `/opt/gpu-agent` 아래 바이너리/패키지 배치
 - `/etc/default/gpu-agent` 환경 파일 작성
 - `/etc/telegraf/telegraf.d/` 설정 파일 배치

@@ -63,8 +63,7 @@
 
 - Python 3.10+ 설치 여부 확인
 - NVIDIA 드라이버 / `nvidia-smi` 동작 여부 확인
-- `dcgm-exporter` 설치 방식 결정
-  - 기존 운영 바이너리 / 패키지 / 컨테이너 방식 중 무엇을 사용할지 확정
+- 기본 번들 `dcgm-exporter` 호환 바이너리를 사용할지, 기존 운영 바이너리로 대체할지 결정
 - `telegraf` 자동 설치가 허용되는지 확인
 - 폐쇄망이면 `TELEGRAF_DEB_URL` 사내 미러 경로 준비
 - 테스트 단계에서는 기본 GitHub raw URL 사용 가능 여부 확인

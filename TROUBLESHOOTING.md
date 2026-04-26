@@ -83,6 +83,7 @@ GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test sudo /opt/gpu-agent/bin/gpu-agent
 참고:
 
 - 기본 설치는 `/opt/gpu-agent/bin/gpu-agent`를 생성하지만 PATH 심볼릭 링크는 만들지 않습니다.
+- Linux 설치 스크립트는 `/usr/local/bin/dcgm-exporter`에 번들 `dcgm-exporter` 호환 바이너리를 배치합니다.
 - `upgrade` 명령은 현재 실제 업그레이드를 수행하지 않고 안내 이벤트만 남깁니다.
 
 ## 5. Kubernetes에서 Telegraf pod가 계속 재시작됨

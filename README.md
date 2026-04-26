@@ -37,6 +37,7 @@
 ## 현재 구현 상태
 
 - Linux / Windows 설치 스크립트에 Telegraf 자동 설치 로직이 포함되어 있습니다.
+- Linux 설치 스크립트에는 호스트 기반 `dcgm-exporter` 호환 서비스 자동 설치 로직이 포함되어 있습니다.
 - Linux 설치 결과물은 기본적으로 `/opt/gpu-agent/bin/gpu-agent` 경로에 배치되며, PATH 심볼릭 링크는 자동 생성하지 않습니다.
 - Windows 설치 결과물은 기본적으로 `C:\gpu-agent\bin\gpu-agent.cmd` 경로에 배치됩니다.
 - Kubernetes에서는 `dcgm-exporter`와 `telegraf`가 분리되어 있고, Telegraf는 `dcgm-exporter`를 scrape하지 않습니다.
@@ -81,7 +82,7 @@ https://github.com/yamatoeru/gpu_monitoring_governance
 1. Python 3.10+ 준비
 2. 리포를 다운로드하거나 패키징된 설치 파일을 대상 서버에 복사
 3. `linux/install_linux.sh` 실행
-   이 단계는 `sudo`가 필요합니다. 설치 스크립트는 `telegraf` 패키지 설치, `/opt/gpu-agent` 파일 배치, `/etc/default/gpu-agent` 작성, `systemd` unit/timer 등록, 서비스 enable/restart를 수행합니다.
+   이 단계는 `sudo`가 필요합니다. 설치 스크립트는 `telegraf` 패키지 설치, 호스트 기반 `dcgm-exporter` 호환 서비스 배치, `/opt/gpu-agent` 파일 배치, `/etc/default/gpu-agent` 작성, `systemd` unit/timer 등록, 서비스 enable/restart를 수행합니다.
 4. `sudo /opt/gpu-agent/bin/gpu-agent validate`
    `gpu-agent` 명령은 PATH에 자동 등록되지 않으므로 기본 실행 경로는 `/opt/gpu-agent/bin/gpu-agent` 입니다.
 
