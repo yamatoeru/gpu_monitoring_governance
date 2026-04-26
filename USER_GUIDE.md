@@ -84,6 +84,19 @@ Git을 설치하지 않은 서버나 Windows 환경에서는 GitHub 리포지토
 
 다운로드 후에는 각 환경의 설치 절차를 진행합니다.
 
+## 3-1. 환경별 다운로드 / 설치 소스
+
+| 환경 | 구성요소 | 기본 소스 | 설치 방식 | 운영 전환 시 변경 지점 |
+| --- | --- | --- | --- | --- |
+| Linux | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `linux/install_linux.sh` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
+| Linux | `telegraf` | InfluxData 공식 `.deb` (`TELEGRAF_DEB_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_DEB_URL` |
+| Linux | `dcgm-exporter` | 리포에 포함된 번들 `linux/dcgm-exporter` | 설치 스크립트가 `/usr/local/bin/dcgm-exporter`로 배치 | 번들 파일 교체 또는 운영 바이너리 보존 |
+| Windows | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `windows/install_windows.ps1` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
+| Windows | `telegraf` | InfluxData 공식 `.zip` (`TELEGRAF_ZIP_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_ZIP_URL` |
+| Kubernetes | `dcgm-exporter` | `k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
+| Kubernetes | `telegraf` | `k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
+| 공통 | agent version check | GitHub raw `examples/latest_version.json` (`GPU_AGENT_LATEST_VERSION_URL`) | `validate` 시 HTTP 또는 `file://` 조회 | `GPU_AGENT_LATEST_VERSION_URL` |
+
 ### 기존 Telegraf가 이미 설치된 경우
 
 - Linux / Windows 설치 스크립트는 기존 Telegraf를 먼저 감지합니다.
