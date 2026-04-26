@@ -26,7 +26,9 @@
 - `windows/`
   - Windows 설치 스크립트, PowerShell wrapper, Telegraf 설정
 - `k8s/`
-  - Kubernetes DaemonSet, CronJob, RBAC, ingest 매니페스트
+  - 클라이언트 클러스터용 Kubernetes DaemonSet, CronJob, RBAC 매니페스트
+- `k8s/server/`
+  - 서버 클러스터용 `gpu-ingest` 배포 매니페스트
 - `k8s/test/`
   - 비GPU 테스트 클러스터용 오버레이
 - `ingest/`
@@ -110,10 +112,16 @@ https://github.com/yamatoeru/gpu_monitoring_governance
 
 ### Kubernetes
 
-베이스 배포:
+클라이언트 클러스터 배포:
 
 ```bash
 kubectl apply -k k8s
+```
+
+서버 클러스터의 `gpu-ingest` 배포:
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl apply -f -
 ```
 
 테스트 오버레이 배포:

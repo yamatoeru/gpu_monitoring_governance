@@ -5,9 +5,6 @@ resources:
   - namespace.yaml
   - rbac.yaml
   - configmap.yaml
-  - ingest-configmap.yaml
-  - ingest-deployment.yaml
-  - ingest-service.yaml
   - dcgm-daemonset.yaml
   - dcgm-service.yaml
   - telegraf-daemonset.yaml

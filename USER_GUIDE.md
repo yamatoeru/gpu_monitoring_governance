@@ -234,10 +234,16 @@ git clone https://github.com/yamatoeru/gpu_monitoring_governance.git
 cd gpu_monitoring_governance
 ```
 
-### 베이스 배포
+### 클라이언트 클러스터 배포
 
 ```bash
 kubectl apply -k k8s
+```
+
+### 서버 클러스터의 ingest 배포
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl apply -f -
 ```
 
 ### 테스트 오버레이 배포
