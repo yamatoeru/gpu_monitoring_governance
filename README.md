@@ -155,16 +155,22 @@ gpu-agent -> local result JSON / direct event -> ingest -> ClickHouse
 - `gpu-agent` / `validator`가 직접 보내는 JSON 이벤트
 - `telegraf`가 보내는 `metrics` 배열 JSON
 
-실행 예:
+운영 배포:
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl apply -f -
+```
+
+운영 기준 ingest endpoint:
+
+```text
+http://<server-cluster-gpu-ingest-loadbalancer>:8080/events
+```
+
+로컬 개발 / 단독 테스트 실행 예:
 
 ```bash
 python3 -m ingest.server
-```
-
-Kubernetes 내부 주소:
-
-```text
-http://gpu-ingest.gpu-monitoring.svc.cluster.local:8080/events
 ```
 
 선택적 ClickHouse 환경변수:

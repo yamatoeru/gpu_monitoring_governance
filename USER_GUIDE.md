@@ -269,19 +269,35 @@ kubectl create job --from=cronjob/gpu-agent-validator -n gpu-monitoring manual-v
 
 ## 7. ingest 사용 절차
 
-### 로컬 실행
+운영 기준으로는 `ingest`를 서버 클러스터에 배포해야 합니다. `python3 -m ingest.server`는 개발/로컬 테스트용입니다.
+
+### 서버 클러스터 배포
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl apply -f -
+```
+
+배포 후에는 클라이언트 클러스터의 `ingest_url`이 서버 클러스터의 `gpu-ingest` 주소를 가리키도록 설정합니다.
+
+예:
+
+```text
+http://<server-cluster-gpu-ingest-loadbalancer>:8080/events
+```
+
+### 로컬 개발 실행
 
 ```bash
 python3 -m ingest.server
 ```
 
-### 파일 기록 포함 실행
+### 로컬 개발 실행 + 파일 기록
 
 ```bash
 INGEST_OUTPUT_PATH=/tmp/gpu-monitoring-events.ndjson python3 -m ingest.server
 ```
 
-### ClickHouse 적재 포함 실행
+### 로컬 개발 실행 + ClickHouse 적재
 
 ```bash
 CLICKHOUSE_URL=http://clickhouse.monitoring.svc.cluster.local:8123 \
@@ -307,7 +323,7 @@ curl http://127.0.0.1:8080/health
 - Kubernetes
   - validator direct event
   - Telegraf log event
-  - `gpu-ingest` normalized event 로그
+  - 서버 클러스터 `gpu-ingest` normalized event 로그
   - `CLICKHOUSE_URL` 설정 시 ClickHouse row
 
 ## 9. 현재 한계

@@ -15,7 +15,23 @@
 - 선택적으로 ClickHouse HTTP insert 수행
 - 운영용 인증 / dedup / retry / dead-letter queue는 아직 미구현
 
-## 실행
+## 운영 배포
+
+운영 기준으로는 `ingest`를 서버측 Kubernetes 클러스터에 배포합니다.
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl apply -f -
+```
+
+클라이언트 클러스터는 `validator`/`telegraf`가 아래 endpoint로 전송하도록 설정합니다.
+
+```text
+http://<server-cluster-gpu-ingest-loadbalancer>:8080/events
+```
+
+Kubernetes에서는 `gpu-ingest-clickhouse` Secret에 아래 ClickHouse 키를 넣어 `gpu-ingest` Deployment에 주입합니다.
+
+## 로컬 개발 실행
 
 ```bash
 cd ingest
@@ -49,7 +65,7 @@ python3 -m ingest.server
 INGEST_OUTPUT_PATH=/tmp/gpu-monitoring-events.ndjson python3 -m ingest.server
 ```
 
-ClickHouse insert까지 함께 쓰려면:
+로컬 개발에서 ClickHouse insert까지 함께 쓰려면:
 
 ```bash
 CLICKHOUSE_URL=http://clickhouse.monitoring.svc.cluster.local:8123 \
@@ -57,8 +73,6 @@ CLICKHOUSE_DATABASE=gpu_monitoring \
 CLICKHOUSE_TABLE=events \
 python3 -m ingest.server
 ```
-
-Kubernetes에서는 `gpu-ingest-clickhouse` Secret에 같은 키를 넣어 `gpu-ingest` Deployment에 주입할 수 있습니다.
 
 ## 엔드포인트
 
