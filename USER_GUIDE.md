@@ -68,9 +68,9 @@
   - `telegraf`
   - `validator`
 - 사용하는 폴더
-  - `k8s/`
+  - `k8s/client/`
 - 실제 배포 진입점
-  - `kubectl apply -k k8s`
+  - `kubectl apply -k k8s/client`
 
 ### 클라이언트에 설치되지 않는 서버측 구성요소
 
@@ -145,8 +145,8 @@ Git을 설치하지 않은 서버나 Windows 환경에서는 GitHub 리포지토
 | Linux | `dcgm-exporter` | 리포에 포함된 번들 `linux/dcgm-exporter` | 설치 스크립트가 `/usr/local/bin/dcgm-exporter`로 배치 | 번들 파일 교체 또는 운영 바이너리 보존 |
 | Windows | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `windows/install_windows.ps1` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
 | Windows | `telegraf` | InfluxData 공식 `.zip` (`TELEGRAF_ZIP_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_ZIP_URL` |
-| Kubernetes | `dcgm-exporter` | `k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
-| Kubernetes | `telegraf` | `k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
+| Kubernetes | `dcgm-exporter` | `k8s/client/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s/client` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
+| Kubernetes | `telegraf` | `k8s/client/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s/client` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
 | 공통 | agent version check | GitHub raw `examples/latest_version.json` (`GPU_AGENT_LATEST_VERSION_URL`) | `validate` 시 HTTP 또는 `file://` 조회 | `GPU_AGENT_LATEST_VERSION_URL` |
 
 ### 기존 Telegraf가 이미 설치된 경우
@@ -289,7 +289,7 @@ cd gpu_monitoring_governance
 ### 클라이언트 클러스터 배포
 
 ```bash
-kubectl apply -k k8s
+kubectl apply -k k8s/client
 ```
 
 ### 서버 클러스터의 ingest 배포
@@ -301,7 +301,7 @@ kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl ap
 ### 테스트 오버레이 배포
 
 ```bash
-kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/test | kubectl apply -f -
+kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/client/test | kubectl apply -f -
 ```
 
 ### 상태 확인

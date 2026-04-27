@@ -40,7 +40,7 @@
 - 필요 시 `gpu-ingest` 앞단에 `Envoy Gateway`를 두고, 클라이언트는 Gateway endpoint만 사용하도록 표준화
 - `CLICKHOUSE_URL`, `CLICKHOUSE_DATABASE`, `CLICKHOUSE_TABLE`, 인증 정보 전달 방식 확정
 - Kubernetes에서는 `gpu-ingest-clickhouse` Secret 키 구성을 표준화
-- 운영 배포는 `k8s/server` 기준으로 수행하고, `python3 -m ingest.server`는 개발/로컬 테스트 용도로만 사용
+- 운영 배포는 `k8s/server` 기준으로 수행하고, 클라이언트 클러스터 배포는 `k8s/client` 기준으로 수행하며, `python3 -m ingest.server`는 개발/로컬 테스트 용도로만 사용
 - readiness / liveness probe 정책 확인
 - stdout log 수집 여부 결정
 - 내부 version endpoint URL과 DNS 해석 가능 범위를 확정

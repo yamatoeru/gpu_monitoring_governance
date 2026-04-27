@@ -9,7 +9,7 @@ What it changes:
 - keeps `telegraf` on log/event collection rather than `dcgm-exporter` metric scrape
 
 Apply with:
-`kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/test | kubectl apply -f -`
+`kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/client/test | kubectl apply -f -`
 
 Optional:
 - replace the external ingest URL in `patch-configmap.yaml` with the real server-cluster endpoint for your environment
