@@ -37,6 +37,7 @@
 
 - `gpu-ingest`를 서버 클러스터 / 네임스페이스에 배치
 - `Service` 주소와 DNS 명세 확정
+- 필요 시 `gpu-ingest` 앞단에 `Envoy Gateway`를 두고, 클라이언트는 Gateway endpoint만 사용하도록 표준화
 - `CLICKHOUSE_URL`, `CLICKHOUSE_DATABASE`, `CLICKHOUSE_TABLE`, 인증 정보 전달 방식 확정
 - Kubernetes에서는 `gpu-ingest-clickhouse` Secret 키 구성을 표준화
 - 운영 배포는 `k8s/server` 기준으로 수행하고, `python3 -m ingest.server`는 개발/로컬 테스트 용도로만 사용
@@ -47,9 +48,11 @@
 ## 3. 네트워크 / 보안
 
 - 클라이언트 환경에서 `ingest` URL 접근 가능 여부 확인
+- `Envoy Gateway`를 사용하는 경우 `ingest_url`은 `gpu-ingest` Service가 아니라 Gateway URL을 가리키게 구성
 - 클라이언트 환경에서 `vmagent` scrape 또는 remote write 경로 접근 가능 여부 확인
 - 방화벽 / NetworkPolicy / 사내 프록시 정책 확인
 - 필요 시 TLS termination 위치 결정
+- `Envoy Gateway` 사용 시 TLS termination, header 기반 인증, body size 제한, request timeout, rate limit 정책을 Gateway에 둘지 확정
 - 토큰 / 헤더 기반 인증이 필요한 경우 전달 방식 정의
 
 ## 4. Kubernetes 운영 준비
@@ -61,6 +64,16 @@
 - `telegraf`가 컨테이너 로그를 읽을 수 있도록 `/var/log/containers`, `/var/log/pods` 마운트 확인
 - `validator` CronJob 스케줄과 실패 보존 정책 확인
 - `gpu-ingest` Service DNS를 `ingest_url`에 반영
+
+### Envoy Gateway 사용 시 추가 확인
+
+- `gpu-ingest`는 내부 `ClusterIP`로 두고, 외부 노출은 `Envoy Gateway`를 통해서만 수행할지 결정
+- Gateway route는 `POST /events`를 `gpu-ingest` Service로 전달하도록 구성
+- 필요 시 `GET /health`도 운영 점검용으로 노출할지 결정
+- Gateway timeout이 `validator` / `telegraf`의 전송 timeout보다 과도하게 짧지 않은지 확인
+- `telegraf` payload를 고려해 request body size 제한을 확인
+- retry를 Gateway에서 할지, sender에서만 할지 정책을 분리
+- 클라이언트 설정(`GPU_AGENT_INGEST_URL`, K8s `ingest_url`)은 Gateway URL만 사용하도록 통일
 
 ## 5. Linux 운영 준비
 
@@ -101,6 +114,7 @@
 - `kubectl logs -n gpu-monitoring deployment/gpu-ingest --tail=50`
 - 수동 validator job 실행 후 `gpu-ingest` 수신 확인
 - ClickHouse table row 증가 여부 확인
+- `Envoy Gateway`를 쓰는 경우 Gateway access log / route status / upstream 5xx 여부 확인
 
 ### Linux
 
