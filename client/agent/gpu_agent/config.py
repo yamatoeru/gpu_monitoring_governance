@@ -64,6 +64,8 @@ class AgentConfig:
     telegraf_service_linux: str = "telegraf"
     dcgm_service_linux: str = "dcgm-exporter"
     telegraf_service_windows: str = "telegraf"
+    telegraf_exe_windows: str = r"C:\Program Files\Telegraf\telegraf.exe"
+    dcgm_exe_linux: str = "/usr/local/bin/dcgm-exporter"
     heartbeat_file_name: str = "heartbeat.json"
     result_dir_notice: str = ""
 
@@ -97,5 +99,10 @@ def load_config() -> AgentConfig:
         telegraf_service_linux=os.getenv("GPU_AGENT_TELEGRAF_SERVICE_LINUX", "telegraf"),
         dcgm_service_linux=os.getenv("GPU_AGENT_DCGM_SERVICE_LINUX", "dcgm-exporter"),
         telegraf_service_windows=os.getenv("GPU_AGENT_TELEGRAF_SERVICE_WINDOWS", "telegraf"),
+        telegraf_exe_windows=os.getenv(
+            "GPU_AGENT_TELEGRAF_EXE_WINDOWS",
+            r"C:\Program Files\Telegraf\telegraf.exe",
+        ),
+        dcgm_exe_linux=os.getenv("GPU_AGENT_DCGM_EXE_LINUX", "/usr/local/bin/dcgm-exporter"),
         result_dir_notice=result_dir_notice,
     )

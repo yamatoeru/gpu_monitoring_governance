@@ -1,5 +1,8 @@
 {
   "latest_agent_version": "0.1.0",
+  "latest_telegraf_version_linux": "1.33.3",
+  "latest_telegraf_version_windows": "1.33.3",
+  "latest_dcgm_exporter_version_linux": "0.1.0",
   "required": true,
   "message": "initial approved release",
   "published_at": "2026-04-23T09:00:00+09:00"

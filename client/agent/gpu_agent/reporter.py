@@ -14,6 +14,9 @@ def infer_root_cause(check_name: str) -> str:
         "service_telegraf": "telegraf service not running",
         "service_dcgm-exporter": "dcgm exporter service not running",
         "agent_version": "agent is outdated or version endpoint is unavailable",
+        "telegraf_version_linux": "installed telegraf version differs from approved version",
+        "telegraf_version_windows": "installed telegraf version differs from approved version",
+        "dcgm_exporter_version_linux": "installed dcgm-exporter version differs from approved version",
     }
     return mapping.get(check_name, "unknown")
 
@@ -25,6 +28,9 @@ def infer_action(check_name: str) -> str:
         "service_telegraf": "run gpu-agent repair",
         "service_dcgm-exporter": "run gpu-agent repair or restart dcgm-exporter",
         "agent_version": "run gpu-agent upgrade",
+        "telegraf_version_linux": "update telegraf to the approved version and rerun gpu-agent validate",
+        "telegraf_version_windows": "update telegraf to the approved version and rerun gpu-agent validate",
+        "dcgm_exporter_version_linux": "update dcgm-exporter to the approved version and rerun gpu-agent validate",
     }
     return mapping.get(check_name, "run gpu-agent validate")
 

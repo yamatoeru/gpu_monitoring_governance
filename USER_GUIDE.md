@@ -147,7 +147,7 @@ Git을 설치하지 않은 서버나 Windows 환경에서는 GitHub 리포지토
 | Windows | `telegraf` | InfluxData 공식 `.zip` (`TELEGRAF_ZIP_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_ZIP_URL` |
 | Kubernetes | `dcgm-exporter` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
 | Kubernetes | `telegraf` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
-| 공통 | agent version check | GitHub raw `examples/latest_version.json` (`GPU_AGENT_LATEST_VERSION_URL`) | `validate` 시 HTTP 또는 `file://` 조회 | `GPU_AGENT_LATEST_VERSION_URL` |
+| 공통 | agent / component version check | GitHub raw `examples/latest_version.json` (`GPU_AGENT_LATEST_VERSION_URL`) | `validate` 시 HTTP 또는 `file://` 조회 | `GPU_AGENT_LATEST_VERSION_URL` |
 
 ### 기존 Telegraf가 이미 설치된 경우
 
@@ -174,6 +174,12 @@ $env:TELEGRAF_FORCE_VERSION = "true"
 https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examples/latest_version.json
 ```
 
+- 이 파일에는 현재 아래 버전 기준이 포함됩니다.
+  - `latest_agent_version`
+  - `latest_telegraf_version_linux`
+  - `latest_telegraf_version_windows`
+  - `latest_dcgm_exporter_version_linux`
+- `gpu-agent validate`는 이 값을 기준으로 설치된 `agent`, `telegraf`, `dcgm-exporter` 버전이 승인 버전과 같은지 확인합니다.
 - 운영 전환 시에는 `GPU_AGENT_LATEST_VERSION_URL`만 사내 version endpoint로 교체하면 됩니다.
 - 이 주소를 해석할 수 없는 폐쇄망 환경에서는 `validate`가 `agent_version` 체크에서 실패할 수 있습니다.
 - 이 경우 운영자는 유효한 내부 URL을 제공하거나, 테스트 목적으로 로컬 `file://` 경로를 임시로 지정해야 합니다.

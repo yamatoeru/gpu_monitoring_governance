@@ -229,7 +229,7 @@ Get-Content C:\gpu-agent\agent.env
 테스트용 우회:
 
 ```bash
-printf '%s' '{"latest_agent_version":"0.1.0","required":false}' > /tmp/latest_version.json
+printf '%s' '{"latest_agent_version":"0.1.0","latest_telegraf_version_linux":"1.33.3","latest_dcgm_exporter_version_linux":"0.1.0","required":false}' > /tmp/latest_version.json
 sudo GPU_AGENT_LATEST_VERSION_URL=file:///tmp/latest_version.json /opt/gpu-agent/bin/gpu-agent validate
 ```
 

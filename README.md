@@ -68,6 +68,7 @@
 - Kubernetes `telegraf`는 컨테이너 로그를 읽어 `ingest`로 전송하도록 구성돼 있습니다.
 - `server/ingest/`는 direct event와 Telegraf payload를 공통 normalized event로 바꾸는 최소 서버입니다.
 - `gpu-ingest` Deployment / Service 매니페스트가 포함되어 있습니다.
+- `gpu-agent validate`는 현재 `agent`, `telegraf`, `dcgm-exporter`의 승인 버전을 `examples/latest_version.json` 기준으로 비교할 수 있습니다.
 
 주의:
 
@@ -111,7 +112,7 @@ https://github.com/yamatoeru/gpu_monitoring_governance
 | Windows | `telegraf` | InfluxData 공식 `.zip` (`TELEGRAF_ZIP_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_ZIP_URL` |
 | Kubernetes | `dcgm-exporter` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
 | Kubernetes | `telegraf` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
-| 공통 | agent version check | GitHub raw `examples/latest_version.json` (`GPU_AGENT_LATEST_VERSION_URL`) | `validate` 시 HTTP 또는 `file://` 조회 | `GPU_AGENT_LATEST_VERSION_URL` |
+| 공통 | agent / component version check | GitHub raw `examples/latest_version.json` (`GPU_AGENT_LATEST_VERSION_URL`) | `validate` 시 HTTP 또는 `file://` 조회 | `GPU_AGENT_LATEST_VERSION_URL` |
 
 ### Linux
 

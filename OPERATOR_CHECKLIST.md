@@ -65,6 +65,47 @@
 - `validator` CronJob 스케줄과 실패 보존 정책 확인
 - `gpu-ingest` Service DNS를 `ingest_url`에 반영
 
+## 4-1. 버전 기준 파일 운영 원칙
+
+`gpu-agent validate`의 버전 체크는 로컬에 받은 Git 리포 파일과 현재 설치 파일을 직접 비교하는 방식이 아닙니다.
+
+현재 동작 방식:
+
+- `GPU_AGENT_LATEST_VERSION_URL`이 가리키는 JSON 하나를 읽음
+- 그 JSON 안의 승인 버전 값과 현재 설치된 프로그램 버전을 비교
+- 즉 비교 대상은 `설치된 로컬 프로그램 버전` 대 `version endpoint JSON` 입니다
+
+지원되는 기준 필드:
+
+- `latest_agent_version`
+- `latest_telegraf_version_linux`
+- `latest_telegraf_version_windows`
+- `latest_dcgm_exporter_version_linux`
+
+예시:
+
+```json
+{
+  "latest_agent_version": "0.1.0",
+  "latest_telegraf_version_linux": "1.33.3",
+  "latest_telegraf_version_windows": "1.33.3",
+  "latest_dcgm_exporter_version_linux": "0.1.0",
+  "required": true
+}
+```
+
+운영 원칙:
+
+- 테스트 단계에서는 GitHub raw `examples/latest_version.json` 사용 가능
+- 운영 단계에서는 반드시 사내 `version endpoint` 또는 사내 `file://` 기준 파일을 제공
+- 버전 기준을 바꾸고 싶으면 각 클라이언트에 새 리포를 다시 배포하지 않고, 이 JSON의 승인 버전 값만 바꾸면 됨
+- 단, Linux `dcgm-exporter`처럼 리포 번들 파일을 실제로 교체해야 하는 구성요소는 승인 버전 변경과 별개로 새 배포도 필요함
+
+중요:
+
+- `validate`는 “최신인지 아닌지”를 알려주지만, 자동으로 패키지를 교체하지는 않음
+- 실제 업데이트는 설치 스크립트 재실행 또는 Kubernetes 매니페스트 재적용으로 수행
+
 ### Envoy Gateway 사용 시 추가 확인
 
 - `gpu-ingest`는 내부 `ClusterIP`로 두고, 외부 노출은 `Envoy Gateway`를 통해서만 수행할지 결정
@@ -84,6 +125,7 @@
 - 폐쇄망이면 `TELEGRAF_DEB_URL` 사내 미러 경로 준비
 - 테스트 단계에서는 기본 GitHub raw URL 사용 가능 여부 확인
 - 운영 단계에서는 `GPU_AGENT_LATEST_VERSION_URL`이 가리킬 내부 version endpoint 준비
+- 내부 version endpoint가 `agent`뿐 아니라 `telegraf`, `dcgm-exporter` 승인 버전 필드도 함께 제공하는지 확인
 - systemd 서비스 정책과 로그 보관 경로 확인
 
 ## 6. Windows 운영 준비
@@ -94,6 +136,7 @@
 - 폐쇄망이면 `TELEGRAF_ZIP_URL` 사내 배포 경로 준비
 - 테스트 단계에서는 기본 GitHub raw URL 사용 가능 여부 확인
 - 운영 단계에서는 `GPU_AGENT_LATEST_VERSION_URL`이 가리킬 내부 version endpoint 준비
+- 내부 version endpoint가 Windows용 `telegraf` 승인 버전 필드도 함께 제공하는지 확인
 - OpenSSH 또는 RDP 운영 접근 방식 확정
 - Windows Event Log / 서비스 상태 수집 범위 정의
 
