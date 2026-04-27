@@ -19,8 +19,8 @@
 
 ## 디렉토리
 
-- `agent/`
-  - 공통 Python CLI `gpu-agent`
+- `client/agent/`
+  - Linux / Windows 공통 Python CLI `gpu-agent`
 - `client/linux/`
   - Linux 설치 스크립트, systemd unit, Telegraf 설정
 - `client/windows/`
@@ -104,10 +104,10 @@ https://github.com/yamatoeru/gpu_monitoring_governance
 
 | 환경 | 구성요소 | 기본 소스 | 설치 방식 | 운영 전환 시 변경 지점 |
 | --- | --- | --- | --- | --- |
-| Linux | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `client/linux/install_linux.sh` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
+| Linux | `gpu-agent` | 현재 GitHub 리포지토리의 `client/agent/` | 리포 다운로드 후 `client/linux/install_linux.sh` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
 | Linux | `telegraf` | Debian 계열은 InfluxData 공식 `.deb`, Red Hat 계열은 공식 `.rpm` | 설치 스크립트가 distro에 맞는 패키지를 다운로드 후 설치 | `TELEGRAF_DEB_URL`, `TELEGRAF_RPM_URL` |
 | Linux | `dcgm-exporter` | 리포에 포함된 번들 `client/linux/dcgm-exporter` | 설치 스크립트가 `/usr/local/bin/dcgm-exporter`로 배치 | 번들 파일 교체 또는 운영 바이너리 보존 |
-| Windows | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `client/windows/install_windows.ps1` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
+| Windows | `gpu-agent` | 현재 GitHub 리포지토리의 `client/agent/` | 리포 다운로드 후 `client/windows/install_windows.ps1` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
 | Windows | `telegraf` | InfluxData 공식 `.zip` (`TELEGRAF_ZIP_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_ZIP_URL` |
 | Kubernetes | `dcgm-exporter` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
 | Kubernetes | `telegraf` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |

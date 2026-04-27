@@ -100,7 +100,7 @@ fi
 
 mkdir -p "$(dirname "${TELEGRAF_CONF_TARGET}")"
 
-cp -r ../../agent/gpu_agent "${PKG_DIR}/"
+cp -r ../agent/gpu_agent "${PKG_DIR}/"
 cp linux-telegraf-gpu-agent.conf "${TELEGRAF_CONF_TARGET}"
 cp gpu-agent-validate.service "${SYSTEMD_DIR}/gpu-agent-validate.service"
 cp gpu-agent-validate.timer "${SYSTEMD_DIR}/gpu-agent-validate.timer"

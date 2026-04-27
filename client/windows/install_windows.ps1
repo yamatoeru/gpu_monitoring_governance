@@ -72,7 +72,7 @@ if ($HasTelegrafService -or $InstalledTelegrafVersion) {
 
 New-Item -ItemType Directory -Force -Path $BaseDir, $BinDir, $PkgDir, $StatusDir, $TelegrafConfDir | Out-Null
 
-Copy-Item ..\..\agent\gpu_agent "$PkgDir" -Recurse -Force
+Copy-Item ..\agent\gpu_agent "$PkgDir" -Recurse -Force
 Copy-Item .\telegraf-gpu-agent.conf "$TelegrafConfDir\gpu-agent.conf" -Force
 
 @"
