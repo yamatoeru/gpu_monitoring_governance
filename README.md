@@ -36,6 +36,27 @@
 - `examples/`
   - 버전 정보 예시
 
+## 클라이언트 설치 대상
+
+이 리포 기준으로 클라이언트 측에 설치되거나 배포되는 항목은 아래와 같습니다.
+
+- Linux 클라이언트
+  - `gpu-agent`, `telegraf`, `dcgm-exporter`
+  - 진입점: `linux/install_linux.sh`
+- Windows 클라이언트
+  - `gpu-agent`, `telegraf`
+  - 진입점: `windows/install_windows.ps1`
+- Kubernetes 클라이언트 클러스터
+  - `dcgm-exporter`, `telegraf`, `validator`
+  - 진입점: `kubectl apply -k k8s`
+
+서버측 전용 항목:
+
+- `ingest/`
+  - `gpu-ingest` 서버 코드
+- `k8s/server/`
+  - 서버 클러스터에 배포하는 `gpu-ingest` 매니페스트
+
 ## 현재 구현 상태
 
 - Linux / Windows 설치 스크립트에 Telegraf 자동 설치 로직이 포함되어 있습니다.

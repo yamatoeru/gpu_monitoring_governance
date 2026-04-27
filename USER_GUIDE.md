@@ -34,6 +34,58 @@
 - `gpu-agent`
   - 로컬 상태 점검, 결과 JSON 생성, direct event 전송 가능
 
+## 2-1. 클라이언트 설치 대상 목록
+
+이 리포 기준으로 클라이언트에 설치되거나 배포되는 구성요소는 아래와 같습니다.
+
+### Linux 클라이언트
+
+- 설치 대상 프로그램
+  - `gpu-agent`
+  - `telegraf`
+  - `dcgm-exporter`
+- 사용하는 폴더
+  - `agent/`
+  - `linux/`
+- 실제 설치 진입점
+  - `linux/install_linux.sh`
+
+### Windows 클라이언트
+
+- 설치 대상 프로그램
+  - `gpu-agent`
+  - `telegraf`
+- 사용하는 폴더
+  - `agent/`
+  - `windows/`
+- 실제 설치 진입점
+  - `windows/install_windows.ps1`
+
+### Kubernetes 클라이언트 클러스터
+
+- 배포 대상 구성요소
+  - `dcgm-exporter`
+  - `telegraf`
+  - `validator`
+- 사용하는 폴더
+  - `k8s/`
+- 실제 배포 진입점
+  - `kubectl apply -k k8s`
+
+### 클라이언트에 설치되지 않는 서버측 구성요소
+
+- `ingest/`
+  - `gpu-ingest` 서버 코드
+- `k8s/server/`
+  - 서버 클러스터에 배포하는 `gpu-ingest` 매니페스트
+
+즉 현재 구조에서는:
+
+- Linux 클라이언트: `gpu-agent`, `telegraf`, `dcgm-exporter`
+- Windows 클라이언트: `gpu-agent`, `telegraf`
+- Kubernetes 클라이언트 클러스터: `dcgm-exporter`, `telegraf`, `validator`
+- 서버측 전용: `gpu-ingest`, `ClickHouse`
+
 ## 3. 설치 파일 다운로드 방법
 
 설치 파일을 가져오는 방법은 환경에 따라 아래 셋 중 하나를 권장합니다.
