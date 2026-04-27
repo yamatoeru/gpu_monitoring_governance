@@ -146,6 +146,12 @@ kubectl apply -k client/k8s
 kubectl kustomize --load-restrictor=LoadRestrictionsNone server/k8s | kubectl apply -f -
 ```
 
+homelab 고정 `LoadBalancer` IP를 쓰는 예:
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone server/k8s/overlays/homelab | kubectl apply -f -
+```
+
 테스트 오버레이 배포:
 
 ```bash
@@ -183,10 +189,18 @@ gpu-agent -> local result JSON / direct event -> ingest -> ClickHouse
 kubectl kustomize --load-restrictor=LoadRestrictionsNone server/k8s | kubectl apply -f -
 ```
 
+기본 `server/k8s`는 내부 `ClusterIP` 기준입니다.
+
 운영 기준 ingest endpoint:
 
 ```text
-http://<server-cluster-gpu-ingest-loadbalancer>:8080/events
+https://ingest.example.internal/events
+```
+
+homelab overlay 예:
+
+```text
+http://192.168.50.207:8080/events
 ```
 
 로컬 개발 / 단독 테스트 실행 예:

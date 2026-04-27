@@ -38,9 +38,11 @@
 - `gpu-ingest`를 서버 클러스터 / 네임스페이스에 배치
 - `Service` 주소와 DNS 명세 확정
 - 필요 시 `gpu-ingest` 앞단에 `Envoy Gateway`를 두고, 클라이언트는 Gateway endpoint만 사용하도록 표준화
+- 기본 `server/k8s`는 `ClusterIP` 기준으로 유지하고, `LoadBalancer` 또는 고정 IP는 환경별 overlay로 분리
 - `CLICKHOUSE_URL`, `CLICKHOUSE_DATABASE`, `CLICKHOUSE_TABLE`, 인증 정보 전달 방식 확정
 - Kubernetes에서는 `gpu-ingest-clickhouse` Secret 키 구성을 표준화
 - 운영 배포는 `server/k8s` 기준으로 수행하고, 클라이언트 클러스터 배포는 `client/k8s` 기준으로 수행하며, `python3 -m ingest.server`는 개발/로컬 테스트 용도로만 사용
+- homelab처럼 고정 `LoadBalancer` IP가 필요한 환경은 `server/k8s/overlays/homelab` 같은 별도 overlay로 관리
 - readiness / liveness probe 정책 확인
 - stdout log 수집 여부 결정
 - 내부 version endpoint URL과 DNS 해석 가능 범위를 확정

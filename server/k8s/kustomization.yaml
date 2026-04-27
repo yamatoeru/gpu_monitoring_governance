@@ -9,4 +9,3 @@ resources:
 
 patchesStrategicMerge:
   - patch-ingest-deployment.yaml
-  - patch-ingest-service.yaml

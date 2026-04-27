@@ -23,10 +23,29 @@
 kubectl kustomize --load-restrictor=LoadRestrictionsNone server/k8s | kubectl apply -f -
 ```
 
+기본 `server/k8s`는 내부 `ClusterIP` 기준입니다.
+
+- 운영에서는 `Envoy Gateway` 또는 Ingress 앞단을 두고 그 URL을 클라이언트에 배포하는 것을 권장합니다.
+- homelab처럼 고정 `LoadBalancer` IP가 필요한 환경은 별도 오버레이를 사용합니다.
+
+homelab 예:
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone server/k8s/overlays/homelab | kubectl apply -f -
+```
+
 클라이언트 클러스터는 `validator`/`telegraf`가 아래 endpoint로 전송하도록 설정합니다.
 
+운영 권장 예:
+
 ```text
-http://<server-cluster-gpu-ingest-loadbalancer>:8080/events
+https://ingest.example.internal/events
+```
+
+homelab 예:
+
+```text
+http://192.168.50.207:8080/events
 ```
 
 Kubernetes에서는 `gpu-ingest-clickhouse` Secret에 아래 ClickHouse 키를 넣어 `gpu-ingest` Deployment에 주입합니다.
