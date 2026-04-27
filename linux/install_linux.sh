@@ -12,13 +12,43 @@ SYSTEMD_DIR="/etc/systemd/system"
 DCGM_EXPORTER_TARGET="/usr/local/bin/dcgm-exporter"
 TELEGRAF_VERSION="${TELEGRAF_VERSION:-1.33.3}"
 TELEGRAF_DEB_URL="${TELEGRAF_DEB_URL:-https://dl.influxdata.com/telegraf/releases/telegraf_${TELEGRAF_VERSION}-1_amd64.deb}"
+TELEGRAF_RPM_URL="${TELEGRAF_RPM_URL:-https://dl.influxdata.com/telegraf/releases/telegraf-${TELEGRAF_VERSION}-1.x86_64.rpm}"
 TELEGRAF_TMP_DEB="/tmp/telegraf_${TELEGRAF_VERSION}_amd64.deb"
+TELEGRAF_TMP_RPM="/tmp/telegraf_${TELEGRAF_VERSION}_x86_64.rpm"
 TELEGRAF_FORCE_VERSION="${TELEGRAF_FORCE_VERSION:-false}"
 MANAGE_DCGM_SERVICE="${GPU_AGENT_MANAGE_DCGM_SERVICE:-false}"
 DCGM_EXPORTER_ACTION="install"
 GPU_AGENT_LINK_ACTION="install"
+OS_FAMILY=""
+GPU_AGENT_ENV_TARGET=""
 
 mkdir -p "${BIN_DIR}" "${PKG_DIR}" "${CONF_DIR}" "${LOG_DIR}"
+
+detect_os_family() {
+  local os_release
+  if [[ -f /etc/os-release ]]; then
+    os_release=/etc/os-release
+  elif [[ -f /usr/lib/os-release ]]; then
+    os_release=/usr/lib/os-release
+  else
+    echo "Unsupported Linux distribution: os-release not found." >&2
+    exit 1
+  fi
+
+  # shellcheck disable=SC1090
+  . "${os_release}"
+  local candidates="${ID:-} ${ID_LIKE:-}"
+  if [[ "${candidates}" == *"debian"* ]] || [[ "${candidates}" == *"ubuntu"* ]]; then
+    OS_FAMILY="debian"
+    GPU_AGENT_ENV_TARGET="/etc/default/gpu-agent"
+  elif [[ "${candidates}" == *"rhel"* ]] || [[ "${candidates}" == *"fedora"* ]] || [[ "${candidates}" == *"centos"* ]] || [[ "${candidates}" == *"rocky"* ]] || [[ "${candidates}" == *"almalinux"* ]]; then
+    OS_FAMILY="rhel"
+    GPU_AGENT_ENV_TARGET="/etc/sysconfig/gpu-agent"
+  else
+    echo "Unsupported Linux distribution: ${PRETTY_NAME:-${ID:-unknown}}" >&2
+    exit 1
+  fi
+}
 
 current_telegraf_version() {
   if ! command -v telegraf >/dev/null 2>&1; then
@@ -28,10 +58,27 @@ current_telegraf_version() {
 }
 
 install_telegraf() {
-  curl -fsSL "${TELEGRAF_DEB_URL}" -o "${TELEGRAF_TMP_DEB}"
-  apt-get update -y
-  apt-get install -y "${TELEGRAF_TMP_DEB}"
+  if [[ "${OS_FAMILY}" == "debian" ]]; then
+    curl -fsSL "${TELEGRAF_DEB_URL}" -o "${TELEGRAF_TMP_DEB}"
+    apt-get update -y
+    apt-get install -y "${TELEGRAF_TMP_DEB}"
+  elif [[ "${OS_FAMILY}" == "rhel" ]]; then
+    curl -fsSL "${TELEGRAF_RPM_URL}" -o "${TELEGRAF_TMP_RPM}"
+    if command -v dnf >/dev/null 2>&1; then
+      dnf install -y "${TELEGRAF_TMP_RPM}"
+    elif command -v yum >/dev/null 2>&1; then
+      yum localinstall -y "${TELEGRAF_TMP_RPM}"
+    else
+      echo "Unsupported RHEL-like system: neither dnf nor yum is available." >&2
+      exit 1
+    fi
+  else
+    echo "Unsupported Linux distribution family: ${OS_FAMILY}" >&2
+    exit 1
+  fi
 }
+
+detect_os_family
 
 TELEGRAF_ACTION="install"
 if command -v telegraf >/dev/null 2>&1; then
@@ -111,8 +158,8 @@ if [[ "${GPU_AGENT_LINK_ACTION}" != "preserve" ]]; then
   ln -sfn "${BIN_DIR}/gpu-agent" "${AGENT_LINK_TARGET}"
 fi
 
-mkdir -p /etc/default
-cat > /etc/default/gpu-agent <<'ENV'
+mkdir -p "$(dirname "${GPU_AGENT_ENV_TARGET}")"
+cat > "${GPU_AGENT_ENV_TARGET}" <<'ENV'
 GPU_AGENT_ENV_TYPE=vm
 GPU_AGENT_CONFIG_VERSION=2026.04.23
 GPU_AGENT_LATEST_VERSION_URL=https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examples/latest_version.json

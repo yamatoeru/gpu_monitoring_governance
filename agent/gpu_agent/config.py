@@ -10,6 +10,9 @@ from pathlib import Path
 def _default_env_file() -> Path:
     if platform.system().lower().startswith("win"):
         return Path(r"C:\gpu-agent\agent.env")
+    sysconfig = Path("/etc/sysconfig/gpu-agent")
+    if sysconfig.exists():
+        return sysconfig
     return Path("/etc/default/gpu-agent")
 
 

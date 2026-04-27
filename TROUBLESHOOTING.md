@@ -218,6 +218,8 @@ kubectl exec -n gpu-monitoring ds/telegraf -- ls -1 /var/log/pods
 
 ```bash
 cat /etc/default/gpu-agent
+# Red Hat 계열:
+cat /etc/sysconfig/gpu-agent
 ```
 
 ```powershell

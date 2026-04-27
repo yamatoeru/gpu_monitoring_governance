@@ -89,7 +89,7 @@ Git을 설치하지 않은 서버나 Windows 환경에서는 GitHub 리포지토
 | 환경 | 구성요소 | 기본 소스 | 설치 방식 | 운영 전환 시 변경 지점 |
 | --- | --- | --- | --- | --- |
 | Linux | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `linux/install_linux.sh` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
-| Linux | `telegraf` | InfluxData 공식 `.deb` (`TELEGRAF_DEB_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_DEB_URL` |
+| Linux | `telegraf` | Debian 계열은 InfluxData 공식 `.deb`, Red Hat 계열은 공식 `.rpm` | 설치 스크립트가 distro에 맞는 패키지를 다운로드 후 설치 | `TELEGRAF_DEB_URL`, `TELEGRAF_RPM_URL` |
 | Linux | `dcgm-exporter` | 리포에 포함된 번들 `linux/dcgm-exporter` | 설치 스크립트가 `/usr/local/bin/dcgm-exporter`로 배치 | 번들 파일 교체 또는 운영 바이너리 보존 |
 | Windows | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `windows/install_windows.ps1` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
 | Windows | `telegraf` | InfluxData 공식 `.zip` (`TELEGRAF_ZIP_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_ZIP_URL` |
@@ -153,7 +153,7 @@ sudo ./install_linux.sh
 - `telegraf` 패키지 설치 또는 교체
 - `/usr/local/bin/dcgm-exporter` 바이너리 배치 또는 교체
 - `/opt/gpu-agent` 아래 바이너리/패키지 배치
-- `/etc/default/gpu-agent` 환경 파일 작성
+- Debian 계열은 `/etc/default/gpu-agent`, Red Hat 계열은 `/etc/sysconfig/gpu-agent` 환경 파일 작성
 - `/etc/telegraf/telegraf.d/` 설정 파일 배치
 - `/etc/systemd/system/`에 unit/timer 등록
 - `systemctl enable/restart/start` 수행
