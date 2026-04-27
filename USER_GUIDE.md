@@ -189,6 +189,112 @@ https://raw.githubusercontent.com/yamatoeru/gpu_monitoring_governance/main/examp
 GPU_AGENT_MANAGE_DCGM_SERVICE=true
 ```
 
+## 3-2. 버전 업데이트 절차
+
+현재 리포는 `자동 업그레이더` 방식이 아니라, 새 리포를 다시 받아 설치 스크립트나 매니페스트를 재적용하는 방식입니다.
+
+중요:
+
+- `gpu-agent upgrade` 명령은 현재 실제 패키지 교체를 수행하지 않습니다.
+- 실제 업데이트는 `새 리포 다운로드 -> 설치 스크립트 재실행` 또는 `매니페스트 재적용`으로 진행합니다.
+
+### Linux 업데이트
+
+1. 새 리포를 다시 받거나 최신 변경을 pull
+2. `client/linux/`로 이동
+3. 설치 스크립트 재실행
+
+```bash
+cd client/linux
+sudo ./install_linux.sh
+```
+
+기본 동작:
+
+- `gpu-agent` 파일과 설정은 새 버전으로 반영
+- 기존 `telegraf`가 목표 버전과 다르면 기본적으로 보존
+- 기존 `dcgm-exporter` 바이너리와 unit이 번들 파일과 다르면 기본적으로 보존
+
+기존 Telegraf를 목표 버전으로 강제 교체:
+
+```bash
+cd client/linux
+sudo TELEGRAF_FORCE_VERSION=true ./install_linux.sh
+```
+
+기존 `dcgm-exporter`를 번들 파일로 강제 교체:
+
+```bash
+cd client/linux
+sudo GPU_AGENT_MANAGE_DCGM_SERVICE=true ./install_linux.sh
+```
+
+업데이트 후 검증:
+
+```bash
+sudo gpu-agent validate
+sudo cat /var/log/gpu-agent/last_result.json
+```
+
+### Windows 업데이트
+
+1. 새 리포를 다시 받거나 최신 ZIP을 다시 배포
+2. `client/windows/`로 이동
+3. 설치 스크립트 재실행
+
+```powershell
+cd C:\gpu_monitoring_governance\client\windows
+.\install_windows.ps1
+```
+
+기본 동작:
+
+- `gpu-agent` 파일과 설정은 새 버전으로 반영
+- 기존 `telegraf`가 목표 버전과 다르면 기본적으로 보존
+
+기존 Telegraf를 목표 버전으로 강제 교체:
+
+```powershell
+$env:TELEGRAF_FORCE_VERSION = "true"
+.\install_windows.ps1
+```
+
+업데이트 후 검증:
+
+```powershell
+C:\gpu-agent\bin\gpu-agent.cmd validate
+Get-Content C:\gpu-agent\status\last_result.json
+```
+
+### Kubernetes 클라이언트 클러스터 업데이트
+
+클라이언트 클러스터는 새 매니페스트를 다시 적용하는 방식으로 업데이트합니다.
+
+기본 배포:
+
+```bash
+kubectl apply -k client/k8s
+```
+
+테스트 오버레이:
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone client/k8s/test | kubectl apply -f -
+```
+
+기본 동작:
+
+- 새 ConfigMap, CronJob, DaemonSet 설정이 반영
+- 이미지 태그가 바뀌었으면 새 Pod가 재생성됨
+
+업데이트 후 검증:
+
+```bash
+kubectl get pods -n gpu-monitoring
+kubectl get ds -n gpu-monitoring
+kubectl get cronjob -n gpu-monitoring
+```
+
 ## 4. Linux 사용 절차
 
 1. Python 3.10+ 설치

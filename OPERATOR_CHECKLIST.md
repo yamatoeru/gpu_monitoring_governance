@@ -104,6 +104,85 @@
 - 테스트 클러스터와 운영 클러스터 오버레이를 구분했는지 확인
 - `fake-ingest` 같은 테스트 전용 리소스가 운영 배포 경로에 남아 있지 않은지 확인
 
+## 7-1. 버전 업데이트 운영 절차
+
+현재 리포는 `자동 업그레이더`보다 `재배포` 중심입니다.
+
+- Linux / Windows는 새 리포를 다시 배포하고 설치 스크립트를 재실행
+- Kubernetes는 새 매니페스트를 재적용
+- `gpu-agent upgrade`는 현재 실제 바이너리 교체를 수행하지 않음
+
+### Linux
+
+기본 업데이트:
+
+```bash
+cd client/linux
+sudo ./install_linux.sh
+```
+
+기본 동작:
+
+- `gpu-agent` 파일과 설정 반영
+- 기존 `telegraf`는 기본 보존
+- 기존 `dcgm-exporter` 바이너리와 unit은 기본 보존
+
+강제 Telegraf 교체:
+
+```bash
+cd client/linux
+sudo TELEGRAF_FORCE_VERSION=true ./install_linux.sh
+```
+
+강제 `dcgm-exporter` 교체:
+
+```bash
+cd client/linux
+sudo GPU_AGENT_MANAGE_DCGM_SERVICE=true ./install_linux.sh
+```
+
+### Windows
+
+기본 업데이트:
+
+```powershell
+cd C:\gpu_monitoring_governance\client\windows
+.\install_windows.ps1
+```
+
+강제 Telegraf 교체:
+
+```powershell
+$env:TELEGRAF_FORCE_VERSION = "true"
+.\install_windows.ps1
+```
+
+### Kubernetes 클라이언트
+
+기본 재적용:
+
+```bash
+kubectl apply -k client/k8s
+```
+
+테스트 오버레이 재적용:
+
+```bash
+kubectl kustomize --load-restrictor=LoadRestrictionsNone client/k8s/test | kubectl apply -f -
+```
+
+버전 변경은 주로 다음 위치에서 수행:
+
+- `client/k8s/telegraf-daemonset.yaml`
+- `client/k8s/dcgm-daemonset.yaml`
+- 필요 시 테스트 오버레이의 patch 이미지 태그
+
+### 업데이트 후 공통 검증
+
+- Linux: `sudo gpu-agent validate`
+- Windows: `C:\gpu-agent\bin\gpu-agent.cmd validate`
+- Kubernetes: `kubectl get pods -n gpu-monitoring`, `kubectl get ds -n gpu-monitoring`
+
 ## 8. 배포 후 검증
 
 ### Kubernetes
