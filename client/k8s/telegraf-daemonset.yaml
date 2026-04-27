@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: telegraf
+  namespace: gpu-monitoring
+spec:
+  selector:
+    matchLabels:
+      app: telegraf
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      serviceAccountName: gpu-monitoring-sa
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: telegraf
+          image: harbor.internal/monitoring/telegraf:0.1.0
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          volumeMounts:
+            - name: telegraf-config
+              mountPath: /etc/telegraf/telegraf.conf
+              subPath: telegraf.conf
+            - name: varlogcontainers
+              mountPath: /var/log/containers
+              readOnly: true
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: telegraf-config
+          configMap:
+            name: gpu-monitoring-config
+            items:
+              - key: telegraf.conf
+                path: telegraf.conf
+        - name: varlogcontainers
+          hostPath:
+            path: /var/log/containers
+            type: Directory
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+            type: Directory

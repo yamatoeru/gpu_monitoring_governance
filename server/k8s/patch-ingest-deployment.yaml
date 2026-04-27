@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpu-ingest
+  namespace: gpu-monitoring
+spec:
+  template:
+    spec:
+      containers:
+        - name: ingest
+          env:
+            - name: CLICKHOUSE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_URL
+                  optional: true
+            - name: CLICKHOUSE_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_DATABASE
+                  optional: true
+            - name: CLICKHOUSE_TABLE
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_TABLE
+                  optional: true
+            - name: CLICKHOUSE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_USER
+                  optional: true
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_PASSWORD
+                  optional: true
+            - name: CLICKHOUSE_TIMEOUT
+              valueFrom:
+                secretKeyRef:
+                  name: gpu-ingest-clickhouse
+                  key: CLICKHOUSE_TIMEOUT
+                  optional: true

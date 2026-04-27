@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gpu-agent-validator
+  namespace: gpu-monitoring
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: gpu-monitoring-sa
+          restartPolicy: Never
+          containers:
+            - name: validator
+              image: harbor.internal/monitoring/gpu-agent-validator:0.1.0
+              env:
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: INGEST_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: gpu-monitoring-config
+                      key: ingest_url
+                - name: CONFIG_VERSION
+                  value: "2026.04.23"

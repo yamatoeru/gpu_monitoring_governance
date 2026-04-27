@@ -46,9 +46,9 @@
   - `dcgm-exporter`
 - 사용하는 폴더
   - `agent/`
-  - `linux/`
+  - `client/linux/`
 - 실제 설치 진입점
-  - `linux/install_linux.sh`
+  - `client/linux/install_linux.sh`
 
 ### Windows 클라이언트
 
@@ -57,9 +57,9 @@
   - `telegraf`
 - 사용하는 폴더
   - `agent/`
-  - `windows/`
+  - `client/windows/`
 - 실제 설치 진입점
-  - `windows/install_windows.ps1`
+  - `client/windows/install_windows.ps1`
 
 ### Kubernetes 클라이언트 클러스터
 
@@ -68,15 +68,15 @@
   - `telegraf`
   - `validator`
 - 사용하는 폴더
-  - `k8s/client/`
+  - `client/k8s/`
 - 실제 배포 진입점
-  - `kubectl apply -k k8s/client`
+  - `kubectl apply -k client/k8s`
 
 ### 클라이언트에 설치되지 않는 서버측 구성요소
 
-- `ingest/`
+- `server/ingest/`
   - `gpu-ingest` 서버 코드
-- `k8s/server/`
+- `server/k8s/`
   - 서버 클러스터에 배포하는 `gpu-ingest` 매니페스트
 
 즉 현재 구조에서는:
@@ -140,13 +140,13 @@ Git을 설치하지 않은 서버나 Windows 환경에서는 GitHub 리포지토
 
 | 환경 | 구성요소 | 기본 소스 | 설치 방식 | 운영 전환 시 변경 지점 |
 | --- | --- | --- | --- | --- |
-| Linux | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `linux/install_linux.sh` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
+| Linux | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `client/linux/install_linux.sh` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
 | Linux | `telegraf` | Debian 계열은 InfluxData 공식 `.deb`, Red Hat 계열은 공식 `.rpm` | 설치 스크립트가 distro에 맞는 패키지를 다운로드 후 설치 | `TELEGRAF_DEB_URL`, `TELEGRAF_RPM_URL` |
-| Linux | `dcgm-exporter` | 리포에 포함된 번들 `linux/dcgm-exporter` | 설치 스크립트가 `/usr/local/bin/dcgm-exporter`로 배치 | 번들 파일 교체 또는 운영 바이너리 보존 |
-| Windows | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `windows/install_windows.ps1` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
+| Linux | `dcgm-exporter` | 리포에 포함된 번들 `client/linux/dcgm-exporter` | 설치 스크립트가 `/usr/local/bin/dcgm-exporter`로 배치 | 번들 파일 교체 또는 운영 바이너리 보존 |
+| Windows | `gpu-agent` | 현재 GitHub 리포지토리 | 리포 다운로드 후 `client/windows/install_windows.ps1` 실행 | 사내 Git 또는 사내 패키지 전달 경로 |
 | Windows | `telegraf` | InfluxData 공식 `.zip` (`TELEGRAF_ZIP_URL`) | 설치 스크립트가 다운로드 후 설치 | `TELEGRAF_ZIP_URL` |
-| Kubernetes | `dcgm-exporter` | `k8s/client/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s/client` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
-| Kubernetes | `telegraf` | `k8s/client/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k k8s/client` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
+| Kubernetes | `dcgm-exporter` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
+| Kubernetes | `telegraf` | `client/k8s/` 매니페스트의 컨테이너 이미지 | `kubectl apply -k client/k8s` 또는 오버레이 배포 | 이미지 레지스트리 / 태그 |
 | 공통 | agent version check | GitHub raw `examples/latest_version.json` (`GPU_AGENT_LATEST_VERSION_URL`) | `validate` 시 HTTP 또는 `file://` 조회 | `GPU_AGENT_LATEST_VERSION_URL` |
 
 ### 기존 Telegraf가 이미 설치된 경우
@@ -196,7 +196,7 @@ GPU_AGENT_MANAGE_DCGM_SERVICE=true
 3. 설치 실행
 
 ```bash
-cd linux
+cd client/linux
 sudo ./install_linux.sh
 ```
 
@@ -249,7 +249,7 @@ GPU_AGENT_RESULT_DIR_LINUX=/tmp/gpu-agent-test /opt/gpu-agent/bin/gpu-agent vali
 3. PowerShell 실행 정책 우회 후 설치
 
 ```powershell
-cd C:\gpu_monitoring_governance\windows
+cd C:\gpu_monitoring_governance\client\windows
 Set-ExecutionPolicy -Scope Process Bypass
 .\install_windows.ps1
 ```
@@ -289,19 +289,19 @@ cd gpu_monitoring_governance
 ### 클라이언트 클러스터 배포
 
 ```bash
-kubectl apply -k k8s/client
+kubectl apply -k client/k8s
 ```
 
 ### 서버 클러스터의 ingest 배포
 
 ```bash
-kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl apply -f -
+kubectl kustomize --load-restrictor=LoadRestrictionsNone server/k8s | kubectl apply -f -
 ```
 
 ### 테스트 오버레이 배포
 
 ```bash
-kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/client/test | kubectl apply -f -
+kubectl kustomize --load-restrictor=LoadRestrictionsNone client/k8s/test | kubectl apply -f -
 ```
 
 ### 상태 확인
@@ -326,7 +326,7 @@ kubectl create job --from=cronjob/gpu-agent-validator -n gpu-monitoring manual-v
 ### 서버 클러스터 배포
 
 ```bash
-kubectl kustomize --load-restrictor=LoadRestrictionsNone k8s/server | kubectl apply -f -
+kubectl kustomize --load-restrictor=LoadRestrictionsNone server/k8s | kubectl apply -f -
 ```
 
 배포 후에는 클라이언트 클러스터의 `ingest_url`이 서버 클러스터의 `gpu-ingest` 주소를 가리키도록 설정합니다.
@@ -340,18 +340,21 @@ http://<server-cluster-gpu-ingest-loadbalancer>:8080/events
 ### 로컬 개발 실행
 
 ```bash
+cd server
 python3 -m ingest.server
 ```
 
 ### 로컬 개발 실행 + 파일 기록
 
 ```bash
+cd server
 INGEST_OUTPUT_PATH=/tmp/gpu-monitoring-events.ndjson python3 -m ingest.server
 ```
 
 ### 로컬 개발 실행 + ClickHouse 적재
 
 ```bash
+cd server
 CLICKHOUSE_URL=http://clickhouse.monitoring.svc.cluster.local:8123 \
 CLICKHOUSE_DATABASE=gpu_monitoring \
 CLICKHOUSE_TABLE=events \

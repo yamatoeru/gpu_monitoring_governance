@@ -1,0 +1,371 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-ingest-app
+  namespace: gpu-monitoring
+data:
+  __init__.py: |
+    """Minimal ingest gateway for GPU monitoring governance."""
+  clickhouse.py: |
+    from __future__ import annotations
+
+    import json
+    import os
+    import re
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+
+    CLICKHOUSE_URL = os.getenv("CLICKHOUSE_URL", "").rstrip("/")
+    CLICKHOUSE_DATABASE = os.getenv("CLICKHOUSE_DATABASE", "gpu_monitoring")
+    CLICKHOUSE_TABLE = os.getenv("CLICKHOUSE_TABLE", "events")
+    CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER", "")
+    CLICKHOUSE_PASSWORD = os.getenv("CLICKHOUSE_PASSWORD", "")
+    CLICKHOUSE_TIMEOUT = float(os.getenv("CLICKHOUSE_TIMEOUT", "5"))
+
+    _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    _COLUMNS = [
+        "event_time",
+        "source",
+        "host",
+        "env_type",
+        "os_type",
+        "component",
+        "event_type",
+        "severity",
+        "error_code",
+        "message",
+        "root_cause",
+        "recommended_action",
+        "agent_version",
+        "config_version",
+        "stream",
+        "logtag",
+        "path",
+        "checks_json",
+        "extra_json",
+        "raw_payload_json",
+        "raw_metric_json",
+    ]
+
+
+    def is_enabled() -> bool:
+        return bool(CLICKHOUSE_URL)
+
+
+    def _validate_identifier(value: str, label: str) -> str:
+        if not _IDENTIFIER_RE.match(value):
+            raise ValueError(f"invalid_clickhouse_{label}")
+        return value
+
+
+    def _json_string(value: object) -> str:
+        if value in (None, ""):
+            return ""
+        return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+    def _prepare_record(record: dict) -> dict[str, str]:
+        prepared = {
+            "event_time": str(record.get("event_time", "")),
+            "source": str(record.get("source", "")),
+            "host": str(record.get("host", "")),
+            "env_type": str(record.get("env_type", "")),
+            "os_type": str(record.get("os_type", "")),
+            "component": str(record.get("component", "")),
+            "event_type": str(record.get("event_type", "")),
+            "severity": str(record.get("severity", "")),
+            "error_code": str(record.get("error_code", "")),
+            "message": str(record.get("message", "")),
+            "root_cause": str(record.get("root_cause", "")),
+            "recommended_action": str(record.get("recommended_action", "")),
+            "agent_version": str(record.get("agent_version", "")),
+            "config_version": str(record.get("config_version", "")),
+            "stream": str(record.get("stream", "")),
+            "logtag": str(record.get("logtag", "")),
+            "path": str(record.get("path", "")),
+            "checks_json": _json_string(record.get("checks")),
+            "extra_json": _json_string(record.get("extra")),
+            "raw_payload_json": _json_string(record.get("raw_payload")),
+            "raw_metric_json": _json_string(record.get("raw_metric")),
+        }
+        return {column: prepared[column] for column in _COLUMNS}
+
+
+    def insert_records(records: list[dict]) -> None:
+        if not records or not is_enabled():
+            return
+
+        database = _validate_identifier(CLICKHOUSE_DATABASE, "database")
+        table = _validate_identifier(CLICKHOUSE_TABLE, "table")
+        query = f"INSERT INTO {database}.{table} FORMAT JSONEachRow"
+        endpoint = f"{CLICKHOUSE_URL}/?query={urllib.parse.quote(query, safe='')}"
+        body = "\n".join(
+            json.dumps(_prepare_record(record), ensure_ascii=False, separators=(",", ":"))
+            for record in records
+        ).encode("utf-8")
+
+        request = urllib.request.Request(
+            endpoint,
+            data=body,
+            method="POST",
+            headers={"Content-Type": "application/x-ndjson; charset=utf-8"},
+        )
+        password_manager = None
+        if CLICKHOUSE_USER:
+            password_manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+            password_manager.add_password(
+                None,
+                CLICKHOUSE_URL,
+                CLICKHOUSE_USER,
+                CLICKHOUSE_PASSWORD,
+            )
+        opener = urllib.request.build_opener(
+            urllib.request.HTTPBasicAuthHandler(password_manager) if password_manager else urllib.request.BaseHandler()
+        )
+        try:
+            with opener.open(request, timeout=CLICKHOUSE_TIMEOUT) as response:
+                response.read()
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"clickhouse_http_{exc.code}: {detail}") from exc
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"clickhouse_unreachable: {exc.reason}") from exc
+  normalizer.py: |
+    from __future__ import annotations
+
+    import json
+    from datetime import datetime, timezone
+    from typing import Any
+
+
+    def _now_iso() -> str:
+        return datetime.now(timezone.utc).astimezone().isoformat()
+
+
+    def _to_iso_from_epoch(value: Any) -> str:
+        if isinstance(value, (int, float)):
+            return datetime.fromtimestamp(value, tz=timezone.utc).astimezone().isoformat()
+        return _now_iso()
+
+
+    def _safe_json_loads(value: Any) -> dict[str, Any] | None:
+        if not isinstance(value, str):
+            return None
+        value = value.strip()
+        if not value.startswith("{"):
+            return None
+        try:
+            loaded = json.loads(value)
+        except json.JSONDecodeError:
+            return None
+        return loaded if isinstance(loaded, dict) else None
+
+
+    def _infer_component_from_path(path: str) -> str:
+        if "validator" in path:
+            return "gpu-agent-validator"
+        if "dcgm-exporter" in path:
+            return "dcgm-exporter"
+        if "telegraf" in path:
+            return "telegraf"
+        return "unknown"
+
+
+    def normalize_direct_event(payload: dict[str, Any]) -> list[dict[str, Any]]:
+        event_time = payload.get("event_time") or _now_iso()
+        normalized = {
+            "event_time": event_time,
+            "source": "direct",
+            "host": payload.get("host", ""),
+            "env_type": payload.get("env_type", ""),
+            "os_type": payload.get("os_type", ""),
+            "component": payload.get("component", "unknown"),
+            "event_type": payload.get("event_type", "unknown"),
+            "severity": payload.get("severity", "info"),
+            "error_code": payload.get("error_code", ""),
+            "message": payload.get("message", ""),
+            "root_cause": payload.get("root_cause", ""),
+            "recommended_action": payload.get("recommended_action", ""),
+            "agent_version": payload.get("agent_version", ""),
+            "config_version": payload.get("config_version", ""),
+            "stream": "",
+            "logtag": "",
+            "raw_payload": payload,
+        }
+        if "checks" in payload:
+            normalized["checks"] = payload["checks"]
+        if "extra" in payload:
+            normalized["extra"] = payload["extra"]
+        return [normalized]
+
+
+    def normalize_telegraf_metric(metric: dict[str, Any]) -> dict[str, Any]:
+        tags = metric.get("tags", {}) or {}
+        fields = metric.get("fields", {}) or {}
+        raw_message = fields.get("message", "")
+        parsed_message = _safe_json_loads(raw_message)
+
+        component = tags.get("component") or (parsed_message or {}).get("component")
+        if not component:
+            component = _infer_component_from_path(tags.get("path", ""))
+
+        event_type = tags.get("event_type") or (parsed_message or {}).get("event_type")
+        severity = tags.get("severity") or (parsed_message or {}).get("severity", "info")
+        error_code = tags.get("error_code") or (parsed_message or {}).get("error_code", "")
+        env_type = tags.get("env_type") or (parsed_message or {}).get("env_type", "k8s")
+        os_type = tags.get("os_type") or (parsed_message or {}).get("os_type", "kubernetes")
+        host = (parsed_message or {}).get("host") or tags.get("host", "")
+        event_time = (
+            (parsed_message or {}).get("event_time")
+            or fields.get("cri_time")
+            or _to_iso_from_epoch(metric.get("timestamp"))
+        )
+        message = raw_message if raw_message else json.dumps(fields, ensure_ascii=False)
+
+        normalized = {
+            "event_time": event_time,
+            "source": "telegraf",
+            "host": host,
+            "env_type": env_type,
+            "os_type": os_type,
+            "component": component,
+            "event_type": event_type or metric.get("name", "unknown"),
+            "severity": severity,
+            "error_code": error_code,
+            "message": message,
+            "root_cause": (parsed_message or {}).get("root_cause", ""),
+            "recommended_action": (parsed_message or {}).get("recommended_action", ""),
+            "agent_version": (parsed_message or {}).get("agent_version", ""),
+            "config_version": (parsed_message or {}).get("config_version", ""),
+            "stream": tags.get("stream", ""),
+            "logtag": tags.get("logtag", ""),
+            "path": tags.get("path", ""),
+            "raw_metric": metric,
+        }
+        if parsed_message and "checks" in parsed_message:
+            normalized["checks"] = parsed_message["checks"]
+        return normalized
+
+
+    def normalize_payload(payload: dict[str, Any]) -> list[dict[str, Any]]:
+        if "event_time" in payload and "event_type" in payload:
+            return normalize_direct_event(payload)
+
+        metrics = payload.get("metrics")
+        if isinstance(metrics, list):
+            return [normalize_telegraf_metric(metric) for metric in metrics if isinstance(metric, dict)]
+
+        return [{
+            "event_time": _now_iso(),
+            "source": "unknown",
+            "host": "",
+            "env_type": "",
+            "os_type": "",
+            "component": "ingest",
+            "event_type": "unclassified_payload",
+            "severity": "warning",
+            "error_code": "UNCLASSIFIED",
+            "message": json.dumps(payload, ensure_ascii=False),
+            "root_cause": "",
+            "recommended_action": "inspect raw_payload",
+            "agent_version": "",
+            "config_version": "",
+            "stream": "",
+            "logtag": "",
+            "raw_payload": payload,
+        }]
+  server.py: |
+    from __future__ import annotations
+
+    import json
+    import os
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+    from pathlib import Path
+
+    from clickhouse import insert_records, is_enabled as clickhouse_enabled
+    from normalizer import normalize_payload
+
+
+    HOST = os.getenv("INGEST_HOST", "0.0.0.0")
+    PORT = int(os.getenv("INGEST_PORT", "8080"))
+    OUTPUT_PATH = os.getenv("INGEST_OUTPUT_PATH", "")
+
+
+    def _append_ndjson(records: list[dict]) -> None:
+        if not OUTPUT_PATH:
+            return
+        path = Path(OUTPUT_PATH)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as handle:
+            for record in records:
+                handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+    class Handler(BaseHTTPRequestHandler):
+        server_version = "GPUIngest/0.1"
+
+        def _send_json(self, code: int, payload: dict) -> None:
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self) -> None:  # noqa: N802
+            if self.path == "/health":
+                self._send_json(200, {"status": "ok"})
+                return
+            self._send_json(404, {"error": "not_found"})
+
+        def do_POST(self) -> None:  # noqa: N802
+            if self.path != "/events":
+                self._send_json(404, {"error": "not_found"})
+                return
+
+            length = int(self.headers.get("Content-Length", "0"))
+            raw = self.rfile.read(length)
+            try:
+                payload = json.loads(raw.decode("utf-8"))
+            except json.JSONDecodeError as exc:
+                self._send_json(400, {"error": "invalid_json", "detail": str(exc)})
+                return
+
+            normalized = normalize_payload(payload)
+            for record in normalized:
+                print(json.dumps(record, ensure_ascii=False), flush=True)
+            _append_ndjson(normalized)
+            try:
+                insert_records(normalized)
+            except RuntimeError as exc:
+                self._send_json(502, {"error": "clickhouse_insert_failed", "detail": str(exc)})
+                return
+
+            self._send_json(200, {"accepted": len(normalized)})
+
+        def log_message(self, fmt: str, *args) -> None:
+            return
+
+
+    def main() -> None:
+        httpd = HTTPServer((HOST, PORT), Handler)
+        print(
+            json.dumps(
+                    {
+                        "status": "starting",
+                        "host": HOST,
+                        "port": PORT,
+                        "output_path": OUTPUT_PATH,
+                        "clickhouse_enabled": clickhouse_enabled(),
+                    },
+                    ensure_ascii=False,
+                ),
+            flush=True,
+        )
+        httpd.serve_forever()
+
+
+    if __name__ == "__main__":
+        main()
